@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>brandx — Document Surface Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── Design tokens (default palette) ── */
+  :root {
+    --font: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --blue: #1c2b39;
+    --blue-light: #0d8a7d;
+    --accent: #0d8a7d;
+    --important: #b07514;
+    --grey-900: #1f2933;
+    --grey-700: #46535f;
+    --grey-500: #7c8893;
+    --grey-200: #e2e8ec;
+    --grey-50: #f4f7f8;
+    --white: #ffffff;
+    --rag-green-bg: #e8f5ed;
+    --rag-green-text: #2a7f4f;
+    --rag-amber-bg: #fdf3e3;
+    --rag-amber-text: #b07514;
+    --rag-red-bg: #fce8e8;
+    --rag-red-text: #b33a3a;
+    --note-bg: #e6f4f2;
+    --important-bg: #fdf3e3;
+    --table-hover: #e9f3f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    color: var(--grey-900);
+    background: var(--grey-50);
+    font-size: 10pt;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Design-system annotation banner ── */
+  .banner {
+    background: var(--blue);
+    color: var(--white);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 24px;
+    letter-spacing: 0.3px;
+  }
+  .banner em { color: var(--blue-light); font-style: normal; }
+
+  /* ── Page shell ── */
+  .page-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+  }
+
+  /* ── Letterhead ── */
+  .letterhead {
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(28, 43, 57, 0.09);
+    margin-bottom: 20px;
+  }
+  .letterhead-bar {
+    height: 6px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--blue-light) 100%);
+  }
+  .letterhead-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 24px;
+  }
+  .letterhead-id {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .letterhead-monogram {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    background: var(--blue);
+    color: var(--white);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .letterhead-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1.2;
+  }
+  .letterhead-role {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue-light);
+    margin-top: 2px;
+  }
+  .letterhead-date {
+    font-size: 12px;
+    color: var(--grey-500);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Page content ── */
+  .page {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(28, 43, 57, 0.09);
+    padding: 32px 40px 40px;
+  }
+
+  /* ── Document title ── */
+  .doc-title {
+    font-size: 28pt;
+    font-weight: 800;
+    color: var(--blue);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .doc-subtitle {
+    font-size: 13pt;
+    font-weight: 500;
+    color: var(--blue-light);
+    margin-bottom: 28px;
+  }
+
+  /* ── Section headings ── */
+  .section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 2rem 0 0;
+    line-height: 1.25;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 40px; height: 2px;
+    background: var(--accent);
+    margin-top: 7px;
+    margin-bottom: 14px;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 1.5rem 0 0.5rem;
+  }
+  h4 {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: var(--grey-700);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 1.2rem 0 0.3rem;
+  }
+
+  /* ── Body text ── */
+  p { margin-bottom: 0.8em; line-height: 1.6; }
+  ul, ol { margin: 0.5em 0 1em 1.5em; line-height: 1.6; }
+  li { margin-bottom: 0.3em; }
+  a { color: var(--blue); text-decoration: none; border-bottom: 1px solid var(--blue-light); }
+
+  /* ── Alerts ── */
+  .alert {
+    border-left: 3px solid;
+    padding: 10px 14px;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+  .alert-title {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+  .alert-body p { margin-bottom: 0.4em; color: var(--grey-700); }
+  .alert-body p:last-child { margin-bottom: 0; }
+
+  .alert-note { background: var(--note-bg); border-color: var(--blue); }
+  .alert-note .alert-title { color: var(--blue); }
+  .alert-tip { background: var(--rag-green-bg); border-color: var(--rag-green-text); }
+  .alert-tip .alert-title { color: var(--rag-green-text); }
+  .alert-important { background: var(--important-bg); border-color: var(--important); }
+  .alert-important .alert-title { color: var(--important); }
+  .alert-warning { background: var(--rag-amber-bg); border-color: var(--rag-amber-text); }
+  .alert-warning .alert-title { color: var(--rag-amber-text); }
+  .alert-caution { background: var(--rag-red-bg); border-color: var(--rag-red-text); }
+  .alert-caution .alert-title { color: var(--rag-red-text); }
+
+  /* ── Blockquote ── */
+  blockquote {
+    background: var(--grey-50);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 9pt;
+    color: var(--grey-700);
+  }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1rem 0 1.5rem;
+    font-size: 9pt;
+  }
+  .data-table thead th {
+    background: var(--blue);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .data-table thead th:first-child { border-radius: 3px 0 0 0; }
+  .data-table thead th:last-child { border-radius: 0 3px 0 0; }
+  .data-table tbody tr:nth-child(even) { background: var(--grey-50); }
+  .data-table tbody tr:hover { background: var(--table-hover); }
+  .data-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--grey-200);
+    vertical-align: top;
+  }
+
+  /* ── Code ── */
+  pre {
+    position: relative;
+    background: var(--grey-50);
+    border: 1px solid var(--grey-200);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin: 1rem 0 1.5rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 9pt;
+  }
+  p code, li code, td code {
+    background: var(--grey-200);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 8.5pt;
+  }
+
+  /* ── Footer ── */
+  .report-footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--grey-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: var(--grey-500);
+  }
+
+  /* Fake syntax highlight colours for the mockup */
+  .kw { color: #569cd6; }
+  .fn { color: #dcdcaa; }
+  .st { color: #ce9178; }
+  .cm { color: #6a9955; }
+  .nu { color: #b5cea8; }
+</style>
+</head>
+<body>
+
+<div class="banner">brandx · <em>Document surface mockup</em> · Default palette · June 2026 · For design sign-off only</div>
+
+<div class="page-shell">
+
+  <!-- Letterhead -->
+  <div class="letterhead">
+    <div class="letterhead-bar"></div>
+    <div class="letterhead-row">
+      <div class="letterhead-id">
+        <div class="letterhead-monogram">RC</div>
+        <div>
+          <div class="letterhead-name">Richard Cowin</div>
+          <div class="letterhead-role">Enterprise Architect</div>
+        </div>
+      </div>
+      <div class="letterhead-date">20 June 2026</div>
+    </div>
+  </div>
+
+  <!-- Page content -->
+  <div class="page">
+
+    <!-- Title block -->
+    <div class="doc-title">Quarterly Architecture Review</div>
+    <div class="doc-subtitle">Platform Modernisation Programme · Q2 2026</div>
+
+    <!-- Section 1 -->
+    <div class="section-title">Executive Summary</div>
+    <p>This review covers the architectural decisions taken during Q2 2026, the outcomes of the platform modernisation workstream, and the outstanding risks entering Q3. The programme remains broadly on track; two components are amber against the original baseline.</p>
+    <p>The migration from the legacy middleware layer to the event-driven spine was completed ahead of schedule. Residual coupling in the reporting pipeline remains an open item and is tracked in the risk register below.</p>
+
+    <!-- Callouts -->
+    <div class="alert alert-note">
+      <div class="alert-title">Note</div>
+      <div class="alert-body"><p>All cost figures in this document are inclusive of infrastructure provisioning. Staffing is reported separately in the workforce plan.</p></div>
+    </div>
+
+    <div class="alert alert-tip">
+      <div class="alert-title">Tip</div>
+      <div class="alert-body"><p>Use the <code>brandx init</code> command to generate a fully-commented starter config at <code>~/.config/brandx/brand.yaml</code>.</p></div>
+    </div>
+
+    <div class="alert alert-important">
+      <div class="alert-title">Important</div>
+      <div class="alert-body"><p>The config cascade resolves lowest-to-highest: defaults → home config → frontmatter → flags. A key set in frontmatter overrides the same key in the home config.</p></div>
+    </div>
+
+    <div class="alert alert-warning">
+      <div class="alert-title">Warning</div>
+      <div class="alert-body"><p>Pinning the <code>markdown</code> package version is intentional. The styling layer is coupled to python-markdown's exact HTML output shape; a version bump may break rendering.</p></div>
+    </div>
+
+    <div class="alert alert-caution">
+      <div class="alert-title">Caution</div>
+      <div class="alert-body"><p>Do not commit brand configs containing personal contact information to public repositories.</p></div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section-title">Programme Status</div>
+    <h3>Component Health</h3>
+    <p>The table below shows the RAG status of each programme component as at the end of Q2 2026.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event-driven spine</td>
+          <td style="color:#2a7f4f;font-weight:600;">Green</td>
+          <td>Platform Team</td>
+          <td>Ahead of schedule. Live in prod.</td>
+        </tr>
+        <tr>
+          <td>Reporting pipeline</td>
+          <td style="color:#b07514;font-weight:600;">Amber</td>
+          <td>Data Team</td>
+          <td>Residual coupling; tracked in risk register.</td>
+        </tr>
+        <tr>
+          <td>Identity layer</td>
+          <td style="color:#2a7f4f;font-weight:600;">Green</td>
+          <td>Security Team</td>
+          <td>Completed and signed off.</td>
+        </tr>
+        <tr>
+          <td>Customer portal</td>
+          <td style="color:#b33a3a;font-weight:600;">Red</td>
+          <td>Product Team</td>
+          <td>Scope increased. Revised plan due 30 June.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Key Metrics</h3>
+    <ul>
+      <li>Events processed per day: <strong>2.4 million</strong> (up from 1.1 M at Q1)</li>
+      <li>P95 latency on the event spine: <strong>18 ms</strong> (target: &lt; 50 ms)</li>
+      <li>Infrastructure cost per event: <strong>£0.000031</strong></li>
+    </ul>
+
+    <!-- Section 3 — Code -->
+    <div class="section-title">Technical Reference</div>
+    <h3>Config cascade (simplified)</h3>
+    <p>The resolver deep-merges four layers in order. The example below shows how a single <code>accent</code> override in frontmatter leaves the rest of the palette intact:</p>
+
+    <pre><code><span class="cm"># ~/.config/brandx/brand.yaml</span>
+<span class="kw">identity</span>:
+  <span class="kw">name</span>: <span class="st">Richard Cowin</span>
+  <span class="kw">role</span>: <span class="st">Enterprise Architect</span>
+
+<span class="cm">---</span>
+<span class="cm"># document.md frontmatter</span>
+<span class="kw">colours</span>:
+  <span class="kw">accent</span>: <span class="st">"#e63946"</span>   <span class="cm"># only this key overrides; palette is otherwise intact</span></code></pre>
+
+    <h3>CLI invocation</h3>
+    <pre><code><span class="cm"># Render a document</span>
+<span class="fn">brandx</span> render report.md
+
+<span class="cm"># Render email HTML to clipboard</span>
+<span class="fn">brandx</span> render --email report.md --clipboard
+
+<span class="cm"># Flag override (dotted key)</span>
+<span class="fn">brandx</span> render report.md --set colours.accent=<span class="st">"#e63946"</span></code></pre>
+
+    <!-- Plain blockquote -->
+    <blockquote>
+      <p>The design principle is "identity is pure data, the engine is generic." The engine renders whatever resolved config it is handed; it hardcodes no person-specific value.</p>
+    </blockquote>
+
+    <!-- Footer -->
+    <div class="report-footer">
+      <span>Richard Cowin</span>
+      <span>20 June 2026</span>
+    </div>
+
+  </div><!-- .page -->
+</div><!-- .page-shell -->
+
+</body>
+</html>
