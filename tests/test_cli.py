@@ -43,14 +43,14 @@ def test_no_subcommand_exits_zero():
     assert result.returncode == 0
 
 
-def test_init_not_yet_implemented():
+def test_init_force_writes_config():
     result = subprocess.run(
-        [sys.executable, "-m", "brandx.cli", "init"],
+        [sys.executable, "-m", "brandx.cli", "init", "--force"],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 1
-    assert "not yet implemented" in result.stderr
+    assert result.returncode == 0
+    assert "Written:" in result.stderr
 
 
 def test_render_not_yet_implemented():

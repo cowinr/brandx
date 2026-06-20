@@ -79,9 +79,10 @@ def _add_render_subcommand(subparsers):
     )
 
 
-def _cmd_init(_args) -> int:
-    print("Error: 'init' not yet implemented.", file=sys.stderr)
-    return 1
+def _cmd_init(args) -> int:
+    from brandx.initcmd import run_init
+    run_init(force=args.force)
+    return 0
 
 
 def _cmd_render(_args) -> int:
