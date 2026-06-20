@@ -10,7 +10,6 @@ Covers (from plan):
 identity-config AE6, R4, R5.
 """
 
-import os
 import textwrap
 import pytest
 

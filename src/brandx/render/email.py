@@ -45,7 +45,6 @@ from pathlib import Path
 
 from brandx.config.resolver import ResolvedConfig
 from brandx.render.assets import embed_images, file_to_data_uri
-from brandx.render.document import _resolve_doc_date  # reuse, not reimplementing
 from brandx.render.pipeline import ParsedDocument, parse_document
 
 
@@ -431,8 +430,8 @@ def _apply_zebra_striping(html: str, cfg: ResolvedConfig) -> str:
         table_html = re.sub(
             r'<table[^>]*>',
             (
-                f'<table border="0" cellpadding="0" cellspacing="0"'
-                f' style="width:100%;border-collapse:collapse;margin:12px 0;">'
+                '<table border="0" cellpadding="0" cellspacing="0"'
+                ' style="width:100%;border-collapse:collapse;margin:12px 0;">'
             ),
             table_html,
             count=1,

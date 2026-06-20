@@ -16,7 +16,6 @@ from brandx.config.resolver import (
     _deep_merge,
     _initials,
     _title_case_username,
-    ResolvedConfig,
 )
 from brandx.config.defaults import nested_defaults
 

@@ -7,9 +7,7 @@ Covers (from plan):
 - The target directory is created when absent.
 """
 
-import re
 import pytest
-from pathlib import Path
 
 from brandx.config.defaults import DEFAULTS
 from brandx.initcmd import generate_init_yaml, run_init

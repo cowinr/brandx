@@ -23,7 +23,6 @@ Usage:
 
 from __future__ import annotations
 
-import platform
 import pwd
 import re
 import sys
@@ -80,31 +79,6 @@ def _apply_dotted_flags(config: dict, flags: dict[str, Any]) -> dict:
 # ---------------------------------------------------------------------------
 # OS name lookup
 # ---------------------------------------------------------------------------
-
-def _os_full_name() -> str | None:
-    """Return the OS full name for the current user, or None.
-
-    macOS/Linux: reads the GECOS comment field via pwd (may be empty).
-    Windows: not implemented; returns None.
-    The result is stripped and returned as-is; callers handle empty/None.
-    """
-    if sys.platform == "win32":
-        return None
-    try:
-        entry = pwd.getpwuid(os.getuid())  # type: ignore[name-defined]
-        gecos = entry.pw_gecos or ""
-        full_name = gecos.split(",")[0].strip()
-        return full_name if full_name else None
-    except Exception:
-        return None
-
-
-try:
-    import os as _os_mod
-    _os_getuid = _os_mod.getuid
-except AttributeError:
-    _os_getuid = None
-
 
 def _resolve_os_name() -> str:
     """Return a display name derived from the OS account.

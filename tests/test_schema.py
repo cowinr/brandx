@@ -7,8 +7,6 @@ Covers:
 - nested_defaults() and flat_defaults() produce consistent output.
 """
 
-import io
-import sys
 import pytest
 
 from brandx.config.defaults import DEFAULTS, flat_defaults, nested_defaults

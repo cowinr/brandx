@@ -13,7 +13,6 @@ Usage:
     val = DEFAULTS["identity"]["name"]["value"]
 """
 
-from types import MappingProxyType
 from typing import Any
 
 

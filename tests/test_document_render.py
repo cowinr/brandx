@@ -18,11 +18,9 @@ Covers (from plan):
 
 from __future__ import annotations
 
-import re
 from datetime import date
 from pathlib import Path
 
-import pytest
 
 from brandx.config.resolver import resolve, ResolvedConfig
 from brandx.render.document import (

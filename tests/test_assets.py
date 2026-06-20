@@ -11,11 +11,7 @@ Covers:
 """
 
 import base64
-import io
-import sys
-from pathlib import Path
 
-import pytest
 
 from brandx.render.assets import embed_images, file_to_data_uri
 
@@ -72,7 +68,7 @@ class TestEmbedImages:
     def test_local_image_becomes_data_uri(self, tmp_path):
         img = tmp_path / "logo.png"
         img.write_bytes(b"\x89PNG\r\n\x1a\n")
-        html = f'<img src="logo.png" alt="logo">'
+        html = '<img src="logo.png" alt="logo">'
         result = embed_images(html, source_dir=tmp_path)
         assert 'src="data:image/png;base64,' in result
         assert "logo.png" not in result
@@ -123,6 +119,6 @@ class TestEmbedImages:
     def test_single_quotes_src(self, tmp_path):
         img = tmp_path / "logo.png"
         img.write_bytes(b"\x89PNG\r\n\x1a\n")
-        html = f"<img src='logo.png' alt='logo'>"
+        html = "<img src='logo.png' alt='logo'>"
         result = embed_images(html, source_dir=tmp_path)
         assert "data:image/png;base64," in result

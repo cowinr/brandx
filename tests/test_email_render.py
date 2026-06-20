@@ -18,10 +18,8 @@ Covers (from plan):
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
-import pytest
 
 from brandx.config.resolver import resolve, ResolvedConfig
 from brandx.render.email import (
@@ -29,7 +27,6 @@ from brandx.render.email import (
     render_email_file,
     _strip_codehilite,
     _GMAIL_CLIP_WARN_BYTES,
-    _AVATAR_HEAVY_WARN_BYTES,
 )
 from brandx.render.pipeline import parse_text
 
@@ -640,7 +637,7 @@ class TestSizeWarnings:
 
     def test_no_clip_warning_for_small_html(self, capsys):
         """Small emails should not trigger the clip warning."""
-        html = _render("Hello.")
+        _render("Hello.")
         captured = capsys.readouterr()
         assert "clip" not in captured.err.lower()
         assert "gmail" not in captured.err.lower()
