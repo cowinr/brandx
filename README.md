@@ -6,18 +6,16 @@
 
 Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/).
 
-<!-- Public repo URL is TBD. Replace the placeholder below with the real host when published. -->
-
 ```bash
-uv tool install git+https://github.com/<your-org>/brandx
+uv tool install git+https://github.com/cowinr/brandx
 ```
 
 This places a `brandx` command on PATH on macOS, Windows, and Linux.
 
-To install from a local checkout in the meantime:
+To install from a local checkout instead:
 
 ```bash
-git clone https://github.com/<your-org>/brandx
+git clone https://github.com/cowinr/brandx
 cd brandx
 uv tool install .
 ```
@@ -134,7 +132,7 @@ brandx render report.md --brand ~/configs/client-brand.yaml
 ## Update
 
 ```bash
-uv tool install --upgrade git+https://github.com/<your-org>/brandx
+uv tool install --upgrade git+https://github.com/cowinr/brandx
 ```
 
 ## Licence
