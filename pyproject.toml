@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brandx"
+version = "0.1.0"
+description = "Generic identity-free markdown-to-branded-document tool driven by a YAML brand config."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+dependencies = [
+    "markdown==3.7",
+    "pygments>=2.18",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+brandx = "brandx.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/brandx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
