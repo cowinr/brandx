@@ -1,7 +1,7 @@
 ---
 title: "feat: brandx foundation — generic engine, identity config, and distribution"
 type: feat
-status: active
+status: completed
 date: 2026-06-20
 origin: docs/brainstorms/2026-06-20-generic-engine-requirements.md
 ---
