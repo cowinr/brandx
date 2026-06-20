@@ -280,6 +280,21 @@ def test_render_brand_selects_alternate_config(tmp_path, capsys):
     assert "#deadbe" in captured.out or "deadbe" in captured.out.lower()
 
 
+def test_render_with_date_frontmatter(tmp_path, capsys):
+    """Regression: a `date:` in frontmatter (parsed as datetime.date) must not
+    crash the render; the date appears in the document and resolution succeeds."""
+    md = tmp_path / "dated.md"
+    md.write_text(
+        "---\ntitle: Dated Doc\ndate: 2026-06-20\n---\n\n# Dated Doc\n\nBody.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md)])
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "20 June 2026" in captured.out
+
+
 def test_render_output_and_open(tmp_path, monkeypatch, capsys):
     """-o FILE --open writes the file and opens it in the browser."""
     md = tmp_path / "doc.md"

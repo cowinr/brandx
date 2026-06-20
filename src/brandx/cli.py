@@ -140,7 +140,9 @@ def _cmd_render(args) -> int:
     if args.mark is not None:
         flags["identity.mark"] = args.mark
 
-    # 4. Resolve the cascade.
+    # 4. Resolve the cascade. Document metadata in the frontmatter (title, date,
+    #    and similar) is harmless here: the resolver ignores unknown top-level
+    #    keys and a scalar cannot clobber a nested brand block (see _deep_merge).
     cfg = resolve(home_config=home, frontmatter=doc.frontmatter, flags=flags)
 
     # 5. Render.

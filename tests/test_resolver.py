@@ -183,3 +183,18 @@ class TestResolve:
     def test_flag_unknown_path_skipped(self):
         cfg = resolve(flags={"colours.nonexistent_key": "value"})
         assert "nonexistent_key" not in cfg.colours
+
+    def test_scalar_date_frontmatter_does_not_crash(self):
+        """A top-level `date` (e.g. datetime.date from pyyaml) must not clobber
+        the date block and crash resolution; it falls back to the default format."""
+        import datetime
+
+        cfg = resolve(frontmatter={"date": datetime.date(2026, 6, 20)})
+        assert cfg.date_format == "long-british"
+
+    def test_scalar_block_layers_are_ignored(self):
+        """A scalar supplied where a block is expected is ignored, not fatal."""
+        cfg = resolve(frontmatter={"colours": "not-a-block", "identity": 42})
+        # Defaults still apply; resolution completes.
+        assert cfg.colours["blue"] == "#1c2b39"
+        assert cfg.name  # a name was still derived

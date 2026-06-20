@@ -40,13 +40,17 @@ from brandx.config.defaults import nested_defaults
 def _deep_merge(base: dict, override: dict) -> dict:
     """Return a new dict that is base deep-merged with override.
 
-    Nested dicts are merged recursively; scalars in override win.
-    Neither argument is mutated.
+    Nested dicts are merged recursively; scalars in override win. A scalar in
+    override does not replace a nested block in base: keeping the block prevents
+    a document's top-level `date:` (parsed as a datetime.date) from clobbering
+    the `date` config block. Neither argument is mutated.
     """
     result = dict(base)
     for key, value in override.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _deep_merge(result[key], value)
+        if key in result and isinstance(result[key], dict):
+            if isinstance(value, dict):
+                result[key] = _deep_merge(result[key], value)
+            # A scalar cannot replace a nested block; keep the base block.
         else:
             result[key] = value
     return result
@@ -155,10 +159,18 @@ class ResolvedConfig:
     )
 
     def __init__(self, merged: dict) -> None:
-        identity = merged.get("identity", {})
-        colours = merged.get("colours", {})
-        fonts = merged.get("fonts", {})
-        date_block = merged.get("date", {})
+        # Guard against a layer supplying a scalar where a block is expected.
+        # For example, a document's top-level `date:` frontmatter (parsed by
+        # pyyaml as a datetime.date) deep-merges over the `date` brand block;
+        # the CLI strips document-meta keys, but the resolver stays robust too.
+        def _block(key: str) -> dict:
+            value = merged.get(key, {})
+            return value if isinstance(value, dict) else {}
+
+        identity = _block("identity")
+        colours = _block("colours")
+        fonts = _block("fonts")
+        date_block = _block("date")
 
         name: str = (identity.get("name") or "").strip()
         if not name:
