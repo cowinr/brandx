@@ -9,17 +9,17 @@ from __future__ import annotations
 
 from brandx.config.resolver import resolve
 from brandx.session import SessionState
-from brandx.tui import TuiSession, is_supported
+from brandx.tui import TuiSession, _key_completer, _path_completer, is_supported
 
 SAMPLE_MD = "---\ntitle: Doc\n---\n\n# Doc\n\nBody.\n"
 
 
-def _ask_none(_prompt):
+def _ask_none(_prompt, complete=None):
     return ""
 
 
 def _ask(value):
-    return lambda _prompt: value
+    return lambda _prompt, complete=None: value
 
 
 def test_dispatch_o_toggles_output():
@@ -129,3 +129,33 @@ def test_render_screen_shows_options_and_keys(tmp_path, monkeypatch):
 def test_is_supported_false_without_tty():
     # Under pytest stdin/stdout are captured, not TTYs.
     assert is_supported() is False
+
+
+def _all_completions(completer, text):
+    results = []
+    i = 0
+    while True:
+        match = completer(text, i)
+        if match is None:
+            break
+        results.append(match)
+        i += 1
+    return results
+
+
+def test_path_completer_matches_files_and_dirs(tmp_path):
+    (tmp_path / "foo.md").write_text("x", encoding="utf-8")
+    (tmp_path / "sub").mkdir()
+    results = _all_completions(_path_completer, str(tmp_path) + "/")
+    assert any(r.endswith("foo.md") for r in results)
+    assert any(r.endswith("sub/") for r in results)  # directories get a trailing sep
+
+
+def test_key_completer_matches_config_keys():
+    results = _all_completions(_key_completer, "colours.")
+    assert "colours.accent" in results
+    assert all(r.startswith("colours.") for r in results)
+
+
+def test_key_completer_stops_after_equals():
+    assert _key_completer("colours.accent=", 0) is None

@@ -147,7 +147,7 @@ class TuiSession:
         nxt = _DEST_ORDER[(_DEST_ORDER.index(self.state.destination) + 1) % len(_DEST_ORDER)]
         self.state.destination = nxt
         if nxt == DEST_FILE and self.state.dest_path is None:
-            answer = ask("output file path: ").strip()
+            answer = ask("output file path: ", complete="path").strip()
             if answer:
                 self.state.dest_path = Path(answer).expanduser()
             else:
@@ -157,7 +157,7 @@ class TuiSession:
         self.status = f"dest: {self.state.destination}"
 
     def _focus(self, ask) -> None:
-        answer = ask("focus file: ").strip()
+        answer = ask("focus file: ", complete="path").strip()
         if not answer:
             self.status = "focus cancelled"
             return
@@ -169,7 +169,7 @@ class TuiSession:
             self.status = f"not found: {answer}"
 
     def _set(self, ask) -> None:
-        answer = ask("set key=value (blank clears all): ").strip()
+        answer = ask("set key=value (blank clears all): ", complete="key").strip()
         if not answer:
             self.state.overrides.clear()
             self.status = "overrides cleared"
@@ -231,6 +231,57 @@ def is_supported() -> bool:
     return True
 
 
+def _path_completer(text: str, state: int):
+    import glob
+    import os
+
+    matches = [
+        match + (os.sep if os.path.isdir(match) else "")
+        for match in glob.glob(os.path.expanduser(text) + "*")
+    ]
+    matches.sort()
+    return matches[state] if state < len(matches) else None
+
+
+def _key_completer(text: str, state: int):
+    from brandx.config.schema import known_paths
+
+    if "=" in text:
+        return None
+    matches = sorted(key for key in known_paths() if key.startswith(text))
+    return matches[state] if state < len(matches) else None
+
+
+def _install_completer(mode: str | None):
+    """Install a readline completer for the prompt. Returns a restore callable.
+
+    ``mode`` is 'path' (filesystem), 'key' (config override keys), or None.
+    """
+    completer = {"path": _path_completer, "key": _key_completer}.get(mode)
+    if completer is None:
+        return lambda: None
+    try:
+        import readline
+    except ImportError:
+        return lambda: None
+
+    previous = readline.get_completer()
+    previous_delims = readline.get_completer_delims()
+    readline.set_completer(completer)
+    readline.set_completer_delims(" \t\n")  # treat the whole path/key as one token
+    # macOS ships a libedit-backed readline with a different bind syntax.
+    if readline.__doc__ and "libedit" in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+
+    def restore():
+        readline.set_completer(previous)
+        readline.set_completer_delims(previous_delims)
+
+    return restore
+
+
 def run_tui(state: SessionState) -> int:
     """Run the full-screen TUI loop. Restores the terminal on exit."""
     import termios
@@ -240,14 +291,19 @@ def run_tui(state: SessionState) -> int:
     original = termios.tcgetattr(fd)
     tui = TuiSession(state)
 
-    def ask(prompt: str) -> str:
-        # Drop to cooked mode (echo + line editing) for a one-line prompt.
+    def ask(prompt: str, complete: str | None = None) -> str:
+        # Drop to cooked mode (echo + line editing) for a one-line prompt, with
+        # tab-completion (path or config key) via readline when requested.
         termios.tcsetattr(fd, termios.TCSADRAIN, original)
-        sys.stdout.write("\033[?25h\r\n" + prompt)
+        sys.stdout.write("\033[?25h\r\n")
         sys.stdout.flush()
+        restore_completer = _install_completer(complete)
         try:
-            return sys.stdin.readline().rstrip("\n")
+            return input(prompt)
+        except EOFError:
+            return ""
         finally:
+            restore_completer()
             tty.setcbreak(fd)
             sys.stdout.write("\033[?25l")
 
