@@ -79,13 +79,16 @@ def test_version():
     assert "0.1.0" in result.stdout
 
 
-def test_no_subcommand_exits_zero():
+def test_no_subcommand_launches_session_and_exits_zero():
+    """Bare `brandx` starts the interactive session; closed stdin (EOF) exits 0."""
     result = subprocess.run(
         [sys.executable, "-m", "brandx.cli"],
         capture_output=True,
         text=True,
+        input="",
     )
     assert result.returncode == 0
+    assert "interactive session" in result.stdout
 
 
 def test_init_force_writes_config():
@@ -310,3 +313,49 @@ def test_render_output_and_open(tmp_path, monkeypatch, capsys):
 
     assert out.is_file()
     assert opened == [out]
+
+
+# ---------------------------------------------------------------------------
+# U5 entry dispatch (bare brandx / brandx <file> → session)
+# ---------------------------------------------------------------------------
+
+def _no_session(monkeypatch):
+    """Make run_session blow up so we can assert it was NOT taken."""
+    def _boom(*_a, **_k):
+        raise AssertionError("session launched unexpectedly")
+
+    monkeypatch.setattr("brandx.session.run_session", _boom)
+
+
+def test_bare_invocation_launches_session(monkeypatch):
+    calls = []
+    monkeypatch.setattr("brandx.session.run_session", lambda focused=None: calls.append(focused) or 0)
+    with pytest.raises(SystemExit) as exc:
+        main([])
+    assert exc.value.code == 0
+    assert calls == [None]
+
+
+def test_file_argument_focuses_session(monkeypatch):
+    calls = []
+    monkeypatch.setattr("brandx.session.run_session", lambda focused=None: calls.append(focused) or 0)
+    with pytest.raises(SystemExit) as exc:
+        main(["note.md"])
+    assert exc.value.code == 0
+    assert calls == ["note.md"]
+
+
+def test_render_subcommand_does_not_launch_session(tmp_path, monkeypatch, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    _no_session(monkeypatch)
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md)])
+    assert exc.value.code == 0
+
+
+def test_version_flag_does_not_launch_session(monkeypatch):
+    _no_session(monkeypatch)
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0

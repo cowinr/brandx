@@ -1,10 +1,16 @@
 """brandx CLI entry point.
 
+Running `brandx` with no subcommand (optionally `brandx <file.md>`) launches the
+interactive session (see brandx.session). `init` and `render` stay explicit
+subcommands; `render` is the unchanged, pipeable one-shot.
+
 Subcommands:
     init      Write a starter brand config to the home location.
     render    Render a markdown file to a branded document or email.
 
 Usage:
+    brandx                   Launch the interactive session (unfocused).
+    brandx <file.md>         Launch the session focused on a file.
     brandx --help
     brandx init [--force]
     brandx render <file.md> [--email] [-o OUTPUT] [--open] [--preview]
@@ -104,29 +110,79 @@ def _cmd_init(args) -> int:
     return 0
 
 
-def _cmd_render(args) -> int:
-    from brandx.clipboard import copy_html
+class RenderInputError(Exception):
+    """Raised by build_html when the input file or brand config cannot be loaded.
+
+    Carries a user-facing message; callers decide how to surface it (the one-shot
+    render command exits non-zero, the interactive session prints and continues).
+    """
+
+
+def build_html(
+    input_path: Path,
+    *,
+    email: bool = False,
+    brand_path: str | None = None,
+    mark: str | None = None,
+    set_flags: dict[str, str] | None = None,
+):
+    """Load config, parse the document, resolve the cascade, and render.
+
+    Shared core of the one-shot `render` command and the interactive session.
+    Raw `--set` KEY=VALUE string validation is the caller's job; this helper
+    receives an already-built ``set_flags`` dict.
+
+    Args:
+        input_path: Path to the markdown file to render.
+        email: Render the Outlook-safe email surface instead of a document.
+        brand_path: Optional explicit brand config path.
+        mark: Optional identity mark override ('monogram' or 'avatar').
+        set_flags: Already-validated dotted-key overrides.
+
+    Returns:
+        (html, ResolvedConfig, brand_source_label).
+
+    Raises:
+        RenderInputError: when the input file is missing or the brand config
+            cannot be loaded. Both callers handle this rather than exiting here.
+    """
     from brandx.config.discovery import load_home_config
     from brandx.config.resolver import resolve
-    from brandx.output import open_in_browser, preview, write_file
     from brandx.render.document import render_document
     from brandx.render.email import render_email
     from brandx.render.pipeline import parse_document
 
-    # 1. Load home config.
-    home, _source = load_home_config(explicit_path=args.brand)
+    # load_home_config calls sys.exit on a missing/malformed explicit brand file.
+    # Translate that into RenderInputError so the session can survive it.
+    try:
+        home, source = load_home_config(explicit_path=brand_path)
+    except SystemExit as exc:
+        raise RenderInputError(str(exc)) from exc
 
-    # 2. Parse the document.
-    input_path = Path(args.input)
     if not input_path.is_file():
-        print(f"Error: input file not found: {input_path}", file=sys.stderr)
-        return 1
+        raise RenderInputError(f"Error: input file not found: {input_path}")
 
     doc = parse_document(input_path)
 
-    # 3. Build flags dict from CLI overrides.
-    flags: dict[str, str] = {}
+    flags: dict[str, str] = dict(set_flags or {})
+    if mark is not None:
+        flags["identity.mark"] = mark
 
+    # Resolve the cascade. Document metadata in the frontmatter (title, date, and
+    # similar) is harmless: the resolver ignores unknown top-level keys and a
+    # scalar cannot clobber a nested brand block (see _deep_merge).
+    cfg = resolve(home_config=home, frontmatter=doc.frontmatter, flags=flags)
+
+    html = render_email(doc, cfg) if email else render_document(doc, cfg)
+    return html, cfg, source
+
+
+def _cmd_render(args) -> int:
+    from brandx.clipboard import copy_html
+    from brandx.output import open_in_browser, preview, write_file
+
+    # Validate --set KEY=VALUE strings here; build_html receives a clean dict.
+    set_flags: dict[str, str] = {}
     for item in (args.set_flags or []):
         if "=" not in item:
             print(
@@ -135,21 +191,22 @@ def _cmd_render(args) -> int:
             )
             return 1
         key, _, value = item.partition("=")
-        flags[key] = value
+        set_flags[key] = value
 
-    if args.mark is not None:
-        flags["identity.mark"] = args.mark
+    try:
+        html, _cfg, _source = build_html(
+            Path(args.input),
+            email=args.email,
+            brand_path=args.brand,
+            mark=args.mark,
+            set_flags=set_flags,
+        )
+    except RenderInputError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
-    # 4. Resolve the cascade. Document metadata in the frontmatter (title, date,
-    #    and similar) is harmless here: the resolver ignores unknown top-level
-    #    keys and a scalar cannot clobber a nested brand block (see _deep_merge).
-    cfg = resolve(home_config=home, frontmatter=doc.frontmatter, flags=flags)
-
-    # 5. Render.
-    html = render_email(doc, cfg) if args.email else render_document(doc, cfg)
-
-    # 6. Dispatch to the chosen destination.
-    #    Precedence: --clipboard > -o/--output > --preview > stdout.
+    # Dispatch to the chosen destination.
+    # Precedence: --clipboard > -o/--output > --preview > stdout.
     if args.clipboard:
         copy_html(html)
         return 0  # non-fatal regardless; message already printed to stderr
@@ -170,8 +227,34 @@ def _cmd_render(args) -> int:
     return 0
 
 
+_SUBCOMMANDS = {"init", "render"}
+
+
+def _is_session_invocation(argv: list[str]) -> bool:
+    """True when argv should launch the interactive session rather than argparse.
+
+    Bare `brandx` (no args) and `brandx <file>` start the session. A leading
+    `init`/`render` subcommand, or a leading flag (`-h`, `--help`, `--version`),
+    routes to the one-shot parser instead.
+    """
+    if not argv:
+        return True
+    first = argv[0]
+    if first in _SUBCOMMANDS or first.startswith("-"):
+        return False
+    return True
+
+
 def main(argv: list[str] | None = None) -> None:
     """Entry point. Accepts an optional argv list for testing; defaults to sys.argv."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    # Bare `brandx` or `brandx <file>` drops into the interactive session.
+    if _is_session_invocation(argv):
+        from brandx.session import run_session
+        focused = argv[0] if argv else None
+        sys.exit(run_session(focused))
+
     parser = _build_parser()
     args = parser.parse_args(argv)
 
