@@ -60,6 +60,30 @@ def test_panel_reflects_override(tmp_path):
     assert cfg.colours["accent"] == "#e63946"
 
 
+def test_panel_avatar_without_image_shows_monogram_fallback(tmp_path):
+    """Panel must reflect what renders: 'avatar' with no image falls back to monogram."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    state = SessionState(focused_file=md, mark="avatar")
+    cfg = _cfg(flags={"identity.mark": "avatar"})  # no avatar image configured
+    panel = render_panel(state, cfg, "defaults")
+    assert "monogram" in panel
+    assert "no avatar image" in panel
+
+
+def test_panel_avatar_with_image_shows_avatar(tmp_path):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    state = SessionState(focused_file=md, mark="avatar")
+    cfg = _cfg(
+        home_config={"identity": {"avatar": "/some/avatar.png"}},
+        flags={"identity.mark": "avatar"},
+    )
+    panel = render_panel(state, cfg, "defaults")
+    assert "avatar" in panel
+    assert "no avatar image" not in panel
+
+
 def test_panel_file_destination_shows_path(tmp_path):
     state = SessionState(destination="file", dest_path=tmp_path / "out.html")
     panel = render_panel(state, _cfg(), "defaults")

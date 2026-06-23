@@ -98,6 +98,15 @@ def render_panel(state: SessionState, cfg, brand_label: str) -> str:
     # The resolved name is shown alongside the mark only when a file is focused
     # (an unfocused session has no document frontmatter to resolve against).
     mark_extra = cfg.name if state.focused_file is not None else ""
+    mark_value = cfg.mark
+
+    # The renderer falls back to a monogram when 'avatar' is selected but no
+    # avatar image is configured. Reflect what actually renders (R4) rather than
+    # the inert selection. Email uses avatar_email (which falls back to avatar).
+    effective_avatar = cfg.avatar_email if state.email else cfg.avatar
+    if cfg.mark == "avatar" and effective_avatar is None:
+        mark_value = "avatar → monogram (no avatar image set)"
+        mark_extra = ""
 
     if state.overrides:
         set_value = ", ".join(f"{k} = {v}" for k, v in state.overrides.items())
@@ -110,7 +119,7 @@ def render_panel(state: SessionState, cfg, brand_label: str) -> str:
         _row("file", file_value),
         _row("output", "email" if state.email else "document"),
         _row("brand", brand_label),
-        _row("mark", cfg.mark, mark_extra),
+        _row("mark", mark_value, mark_extra),
         _row("dest", dest_value, dest_extra),
         _row("set", set_value),
         _RULE,
