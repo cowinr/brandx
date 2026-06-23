@@ -129,6 +129,45 @@ Use `--brand PATH` to render with a different config file without touching the h
 brandx render report.md --brand ~/configs/client-brand.yaml
 ```
 
+## Interactive session
+
+Running `brandx` with no subcommand (optionally `brandx <file.md>`) drops into an interactive session. Instead of re-typing a full command for every render, you focus a file once, then set and re-set options against an always-visible status panel and re-render in place:
+
+```text
+$ brandx note.md
+brandx · interactive session
+──────────────────────────────────────────────────────
+  file     note.md
+  output   document
+  brand    ~/.config/brandx/brand.yaml
+  mark     monogram               Alex Renwick
+  dest     preview
+  set      (none)
+──────────────────────────────────────────────────────
+  focus  output  brand  mark  dest  set  unset
+  render  reset  status  help  quit
+brandx>
+```
+
+The panel reprints after every command and shows the resolved settings, so what you see is what the next `render` produces.
+
+| Command | Argument | Effect |
+|---|---|---|
+| `focus` | `<file.md>` | Focus a markdown file (replaces the current one). |
+| `output` | `document` \| `email` | Choose the output form. |
+| `brand` | `<path>` \| `default` | Use an alternate brand config, or return to the default. |
+| `mark` | `monogram` \| `avatar` | Choose the identity mark style. |
+| `dest` | `preview` \| `clipboard` \| `file <path>` | Set the render destination. |
+| `set` | `<key=value>` | Add a config override (e.g. `set colours.accent=#e63946`). |
+| `unset` | `<key>` | Remove one override. |
+| `reset` | `[option]` \| `all` | Reset one option, or everything, to defaults. |
+| `render` | — | Render the focused file to the current destination. |
+| `status` | — | Reprint the panel. |
+| `help` | `[command]` | List commands, or show help for one. |
+| `quit` | — | Exit (Ctrl-D also exits). |
+
+Rendering re-reads the focused file each time, so you can edit it in your editor and `render` again without restarting. The one-shot `brandx render` is unchanged and stays the scriptable, pipeable path.
+
 ## Update
 
 ```bash
