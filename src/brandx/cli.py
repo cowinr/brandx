@@ -37,7 +37,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="brandx",
         description="Render markdown to a branded document or Outlook-safe email.",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 0.2.0")
+    parser.add_argument("--version", action="version", version="%(prog)s 0.3.0")
 
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
