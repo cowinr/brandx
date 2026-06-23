@@ -76,6 +76,25 @@ def _row(label: str, value: str, extra: str = "") -> str:
     return line.rstrip()
 
 
+def resolve_for_state(state: SessionState):
+    """Run the cascade for a session state. Returns (ResolvedConfig, brand_label).
+
+    Shared by the line loop and the TUI. Resolves with the focused file's
+    frontmatter (or none when unfocused) so the panel matches the next render.
+    """
+    from brandx.config.discovery import load_home_config
+    from brandx.config.resolver import resolve
+    from brandx.render.pipeline import parse_document
+
+    home, source = load_home_config(explicit_path=state.brand_path)
+    frontmatter: dict = {}
+    if state.focused_file is not None and state.focused_file.is_file():
+        frontmatter = parse_document(state.focused_file).frontmatter
+    cfg = resolve(home_config=home, frontmatter=frontmatter, flags=state.flags())
+    brand_label = source if home else "defaults"
+    return cfg, brand_label
+
+
 def render_panel(state: SessionState, cfg, brand_label: str) -> str:
     """Render the status panel string from session state and resolved config.
 
@@ -145,17 +164,7 @@ class SessionCmd(cmd.Cmd):
 
     def _resolve(self):
         """Re-run the cascade for the current state. Returns (cfg, brand_label)."""
-        from brandx.config.discovery import load_home_config
-        from brandx.config.resolver import resolve
-        from brandx.render.pipeline import parse_document
-
-        home, source = load_home_config(explicit_path=self.state.brand_path)
-        frontmatter: dict = {}
-        if self.state.focused_file is not None and self.state.focused_file.is_file():
-            frontmatter = parse_document(self.state.focused_file).frontmatter
-        cfg = resolve(home_config=home, frontmatter=frontmatter, flags=self.state.flags())
-        brand_label = source if home else "defaults"
-        return cfg, brand_label
+        return resolve_for_state(self.state)
 
     def _print_panel(self) -> None:
         cfg, brand_label = self._resolve()
@@ -336,7 +345,9 @@ class SessionCmd(cmd.Cmd):
 def run_session(focused_file: Path | str | None = None) -> int:
     """Launch an interactive session, optionally focused on a file.
 
-    Returns a process exit code (always 0 today; the session exits on quit/EOF).
+    Uses the full-screen TUI on a real terminal; falls back to the line-driven
+    loop when stdin/stdout is not a TTY (piped input, tests) or the terminal
+    primitives are unavailable. Returns a process exit code.
     """
     state = SessionState()
     if focused_file is not None:
@@ -345,5 +356,10 @@ def run_session(focused_file: Path | str | None = None) -> int:
             state.focused_file = path
         else:
             print(f"File not found: {focused_file}")
+
+    from brandx.tui import is_supported, run_tui
+
+    if is_supported():
+        return run_tui(state)
     SessionCmd(state).cmdloop()
     return 0
