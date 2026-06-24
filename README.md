@@ -5,6 +5,9 @@
 ## Usage examples
 
 ```bash
+# Use the interactive session
+brandx [file]
+
 # Convert to HTML file
 brandx render note.md -o note.html
 
