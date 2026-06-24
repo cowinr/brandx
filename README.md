@@ -2,6 +2,25 @@
 
 **brandx** renders markdown into a branded document or an Outlook-safe email, driven by a user-owned YAML brand config. The engine holds zero person-specific knowledge: identity is pure data, the engine is generic.
 
+## Usage examples
+
+```bash
+# Convert to HTML file
+brandx render note.md -o note.html
+
+# Just preview the HTML (opens a browser)
+brandx render note.md --preview
+
+# Convert to Outlook-safe HTML (ready for paste)
+brandx render --email note.md --clipboard
+
+# Change a config
+brandx render note.md --set colours.accent=#e63946
+
+# Use the hansard branding
+brandx render note.md --brand ~/.config/brandx/hansard.yaml --preview
+```
+
 ## Install
 
 Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/).
@@ -46,7 +65,7 @@ identity:
   role: Senior Analyst   # shown in the letterhead beneath your name
 
 colours:
-  blue: '#1c2b39'        # primary heading colour
+  primary: '#1c2b39'     # primary heading colour
   accent: '#0d8a7d'      # accent bars and active elements
 ```
 

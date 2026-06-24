@@ -18,7 +18,7 @@ No module-global brand state.
 Usage:
     from brandx.config.resolver import resolve
     cfg = resolve(home_config={...}, frontmatter={...}, flags={})
-    cfg.name, cfg.colours["blue"], cfg.fonts["family"]
+    cfg.name, cfg.colours["primary"], cfg.fonts["font"]
 """
 
 from __future__ import annotations
@@ -59,7 +59,7 @@ def _deep_merge(base: dict, override: dict) -> dict:
 def _apply_dotted_flags(config: dict, flags: dict[str, Any]) -> dict:
     """Apply dotted-key flag overrides into a nested config dict.
 
-    e.g. {"colours.blue": "#123"} sets config["colours"]["blue"] = "#123".
+    e.g. {"colours.primary": "#123"} sets config["colours"]["primary"] = "#123".
     A flag whose path does not resolve to a pre-existing key is silently skipped;
     the CLI validates flag names earlier and this prevents pollution of the config.
     """
@@ -222,7 +222,7 @@ def resolve(
     Args:
         home_config: Loaded home YAML config dict (from discovery.load_home_config).
         frontmatter: Nested YAML parsed from the document frontmatter.
-        flags: Dotted-key overrides from invocation flags (e.g. {"colours.blue": "#123"}).
+        flags: Dotted-key overrides from invocation flags (e.g. {"colours.primary": "#123"}).
         os_name_fn: Optional callable returning the OS display name (for testing).
 
     Returns:

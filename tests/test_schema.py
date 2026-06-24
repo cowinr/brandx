@@ -65,12 +65,12 @@ class TestDefaults:
         nd = nested_defaults()
         assert "colours" in nd
         assert isinstance(nd["colours"], dict)
-        assert "blue" in nd["colours"]
+        assert "primary" in nd["colours"]
 
-    def test_nested_and_flat_agree_on_colours_blue(self):
+    def test_nested_and_flat_agree_on_colours_primary(self):
         nd = nested_defaults()
         flat = flat_defaults()
-        assert nd["colours"]["blue"] == flat["colours.blue"]
+        assert nd["colours"]["primary"] == flat["colours.primary"]
 
     def test_default_mark_is_monogram(self):
         nd = nested_defaults()
@@ -94,7 +94,7 @@ class TestSchemaValidation:
         assert captured.err == ""
 
     def test_valid_partial_config_no_warnings(self, capsys):
-        validate_config({"colours": {"blue": "#123456"}}, source_label="<test>")
+        validate_config({"colours": {"primary": "#123456"}}, source_label="<test>")
         captured = capsys.readouterr()
         assert captured.err == ""
 

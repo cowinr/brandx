@@ -35,16 +35,16 @@ class TestDeepMerge:
         assert result["b"] == 2
 
     def test_nested_partial_override(self):
-        base = {"colours": {"blue": "#000", "accent": "#aaa"}}
+        base = {"colours": {"primary": "#000", "accent": "#aaa"}}
         override = {"colours": {"accent": "#bbb"}}
         result = _deep_merge(base, override)
-        assert result["colours"]["blue"] == "#000"
+        assert result["colours"]["primary"] == "#000"
         assert result["colours"]["accent"] == "#bbb"
 
     def test_base_not_mutated(self):
-        base = {"colours": {"blue": "#000"}}
-        _deep_merge(base, {"colours": {"blue": "#fff"}})
-        assert base["colours"]["blue"] == "#000"
+        base = {"colours": {"primary": "#000"}}
+        _deep_merge(base, {"colours": {"primary": "#fff"}})
+        assert base["colours"]["primary"] == "#000"
 
 
 # ---------------------------------------------------------------------------
@@ -94,8 +94,8 @@ class TestResolve:
     def test_defaults_produce_complete_config(self):
         """R2: resolution with no layers beyond defaults yields a complete config."""
         cfg = resolve()
-        assert cfg.colours["blue"]
-        assert cfg.fonts["family"]
+        assert cfg.colours["primary"]
+        assert cfg.fonts["font"]
         assert cfg.date_format
 
     def test_home_config_overrides_default(self):
@@ -112,11 +112,11 @@ class TestResolve:
     def test_nested_colour_partial_override(self):
         """KTD11 / identity-config AE1: partial palette override leaves rest intact."""
         defaults = nested_defaults()
-        original_blue = defaults["colours"]["blue"]
+        original_primary = defaults["colours"]["primary"]
         fm = {"colours": {"accent": "#cafeba"}}
         cfg = resolve(frontmatter=fm)
         assert cfg.colours["accent"] == "#cafeba"
-        assert cfg.colours["blue"] == original_blue
+        assert cfg.colours["primary"] == original_primary
 
     def test_flag_overrides_frontmatter(self):
         """R1: flag (top cascade layer) beats frontmatter."""
@@ -164,7 +164,7 @@ class TestResolve:
     def test_immutable_colours(self):
         cfg = resolve()
         with pytest.raises((AttributeError, TypeError)):
-            cfg.colours["blue"] = "hacked"  # type: ignore[index]
+            cfg.colours["primary"] = "hacked"  # type: ignore[index]
 
     def test_immutable_config_itself(self):
         cfg = resolve()
@@ -177,8 +177,8 @@ class TestResolve:
         assert cfg.initials == "JD"
 
     def test_dotted_flag_nested_colours(self):
-        cfg = resolve(flags={"colours.blue": "#abcdef"})
-        assert cfg.colours["blue"] == "#abcdef"
+        cfg = resolve(flags={"colours.primary": "#abcdef"})
+        assert cfg.colours["primary"] == "#abcdef"
 
     def test_flag_unknown_path_skipped(self):
         cfg = resolve(flags={"colours.nonexistent_key": "value"})
@@ -196,5 +196,5 @@ class TestResolve:
         """A scalar supplied where a block is expected is ignored, not fatal."""
         cfg = resolve(frontmatter={"colours": "not-a-block", "identity": 42})
         # Defaults still apply; resolution completes.
-        assert cfg.colours["blue"] == "#1c2b39"
+        assert cfg.colours["primary"] == "#1c2b39"
         assert cfg.name  # a name was still derived

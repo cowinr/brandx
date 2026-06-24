@@ -6,7 +6,7 @@ Covers (from plan):
 - Structural elements carry inline style= attributes.
 - A code block renders as plain monospace, not highlighted (generic-engine AE1 email half).
 - The body uses role="presentation" tables.
-- Zebra striping alternates per row (odd white #ffffff, even grey-50 #f4f7f8).
+- Zebra striping alternates per row (odd white #ffffff, even surface #f4f7f8).
 - A large embedded avatar triggers a size warning on stderr (generic-engine AE5).
 - Each bx:alert type maps to the right bar colour + background colour.
 - A bx:blockquote becomes the accent-bar two-cell table.
@@ -326,7 +326,7 @@ class TestLetterhead:
         )
         html = _render("Hello.", cfg=cfg)
         assert "Senior Architect" not in html
-        # The role div colour (#0d8a7d = blue_light) should not appear in role context.
+        # The role div colour (#0d8a7d = secondary) should not appear in role context.
         # (It will appear in the border-bottom, not as a role line.)
 
     def test_monogram_in_letterhead_by_default(self):
@@ -355,9 +355,9 @@ class TestLetterhead:
         assert "report-footer" not in html
 
     def test_teal_bottom_border_on_letterhead(self):
-        """The letterhead bottom border uses the blue_light (teal) colour."""
+        """The letterhead bottom border uses the secondary (teal) colour."""
         html = _render("Hello.")
-        # Default blue_light is #0d8a7d
+        # Default secondary is #0d8a7d
         assert "border-bottom:2px solid #0d8a7d" in html
 
     def test_avatar_embedded_when_mark_is_avatar(self, tmp_path):
@@ -446,7 +446,7 @@ class TestAlerts:
     def test_note_bar_and_background(self):
         md = "> [!NOTE]\n> Note text.\n"
         html = _render(md)
-        # bar colour: blue (#1c2b39), bg: note_bg_email (#e6f4f2)
+        # bar colour: primary (#1c2b39), bg: info_bg (#e6f4f2)
         assert "background:#1c2b39" in html
         assert "background:#e6f4f2" in html
         assert ">Note<" in html
@@ -590,7 +590,7 @@ class TestZebraStriping:
         assert tbody_m is not None
         tbody = tbody_m.group(1)
         rows = re.findall(r'<tr[^>]*>(.*?)</tr>', tbody, re.DOTALL)
-        # Row 2 (even) — td backgrounds should be grey-50.
+        # Row 2 (even) — td backgrounds should be surface (#f4f7f8).
         row2_bgs = re.findall(r'background:(#[a-f0-9]{6})', rows[1], re.IGNORECASE)
         assert all(bg.lower() == "#f4f7f8" for bg in row2_bgs), f"Row 2 bgs: {row2_bgs}"
 

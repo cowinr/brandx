@@ -67,102 +67,92 @@ _IDENTITY = {
 # ---------------------------------------------------------------------------
 
 _COLOURS = {
-    "blue": _key(
+    "primary": _key(
         value="#1c2b39",
-        comment="Primary dark colour — headings, table headers, letterhead text.",
+        comment="Primary brand colour — headings, table headers, letterhead text.",
         purpose="Used for primary heading and structural elements across both surfaces.",
     ),
-    "blue_light": _key(
+    "secondary": _key(
         value="#0d8a7d",
-        comment="Secondary accent — role line, heading underlines, links.",
-        purpose="Paired with 'blue' for the gradient bar and role text.",
+        comment="Secondary brand colour — role line, heading underlines, links.",
+        purpose="Paired with 'primary' for the gradient bar and role text.",
     ),
     "accent": _key(
         value="#0d8a7d",
         comment="Accent colour — blockquote bars, active UI elements.",
         purpose="Used for accent borders on plain blockquotes and the letterhead gradient.",
     ),
-    "important": _key(
+    "emphasis": _key(
         value="#b07514",
         comment="Amber tone for [!IMPORTANT] callout bars and labels.",
         purpose="Callout bar and label colour for the IMPORTANT alert type.",
     ),
-    "grey_900": _key(
+    "text": _key(
         value="#1f2933",
         comment="Near-black body text.",
         purpose="Primary body text colour on both surfaces.",
     ),
-    "grey_700": _key(
+    "text_muted": _key(
         value="#46535f",
         comment="Secondary body text — callout bodies, blockquote prose.",
         purpose="Used inside callouts and blockquotes where a slightly lighter tone aids hierarchy.",
     ),
-    "grey_500": _key(
+    "text_subtle": _key(
         value="#7c8893",
         comment="Muted text — dates, captions, footer.",
         purpose="Date and footer text in the letterhead.",
     ),
-    "grey_200": _key(
+    "border": _key(
         value="#e2e8ec",
         comment="Divider and border colour.",
         purpose="Table row dividers, code-block borders, section rules.",
     ),
-    "grey_50": _key(
+    "surface": _key(
         value="#f4f7f8",
         comment="Subtle surface background — code blocks, alternate table rows.",
         purpose="Alternate table row fill and code-block background on the document surface.",
     ),
-    "rag_green_bg": _key(
+    "success_bg": _key(
         value="#e8f5ed",
         comment="Background fill for [!TIP] and RAG-green cells.",
         purpose="Alert background — TIP callout and green RAG status cells.",
     ),
-    "rag_green_text": _key(
+    "success_text": _key(
         value="#2a7f4f",
         comment="Text/bar colour for [!TIP] and RAG-green cells.",
         purpose="Alert label and bar colour for TIP callouts.",
     ),
-    "rag_amber_bg": _key(
+    "warning_bg": _key(
         value="#fdf3e3",
         comment="Background fill for [!WARNING] and RAG-amber cells.",
         purpose="Alert background — WARNING callout and amber RAG status cells.",
     ),
-    "rag_amber_text": _key(
+    "warning_text": _key(
         value="#b07514",
         comment="Text/bar colour for [!WARNING] and RAG-amber cells.",
         purpose="Alert label and bar colour for WARNING callouts.",
     ),
-    "rag_red_bg": _key(
+    "danger_bg": _key(
         value="#fce8e8",
         comment="Background fill for [!CAUTION] and RAG-red cells.",
         purpose="Alert background — CAUTION callout and red RAG status cells.",
     ),
-    "rag_red_text": _key(
+    "danger_text": _key(
         value="#b33a3a",
         comment="Text/bar colour for [!CAUTION] and RAG-red cells.",
         purpose="Alert label and bar colour for CAUTION callouts.",
     ),
-    "note_bg_html": _key(
+    "info_bg": _key(
         value="#e6f4f2",
-        comment="Background fill for [!NOTE] on the document surface.",
-        purpose="NOTE callout background on the document renderer.",
+        comment="Background fill for [!NOTE] callouts on both surfaces.",
+        purpose="NOTE callout background on the document and email renderers.",
     ),
-    "note_bg_email": _key(
-        value="#e6f4f2",
-        comment="Background fill for [!NOTE] on the email surface.",
-        purpose="NOTE callout background on the email renderer. May differ from note_bg_html.",
-    ),
-    "important_bg_html": _key(
+    "emphasis_bg": _key(
         value="#fdf3e3",
-        comment="Background fill for [!IMPORTANT] on the document surface.",
-        purpose="IMPORTANT callout background on the document renderer.",
+        comment="Background fill for [!IMPORTANT] callouts on both surfaces.",
+        purpose="IMPORTANT callout background on the document and email renderers.",
     ),
-    "important_bg_email": _key(
-        value="#fdf3e3",
-        comment="Background fill for [!IMPORTANT] on the email surface.",
-        purpose="IMPORTANT callout background on the email renderer.",
-    ),
-    "table_hover": _key(
+    "row_hover": _key(
         value="#e9f3f1",
         comment="Table row hover fill (document only; emails ignore :hover).",
         purpose="Hover state for table rows on the document surface.",
@@ -174,12 +164,12 @@ _COLOURS = {
 # ---------------------------------------------------------------------------
 
 _FONTS = {
-    "family": _key(
+    "font": _key(
         value="'Inter', -apple-system, 'Segoe UI', Arial, sans-serif",
         comment="CSS font-family stack for the document surface.",
         purpose="Applied via CSS variable on the document renderer.",
     ),
-    "family_email": _key(
+    "font_email": _key(
         value="'Inter', 'Segoe UI', Arial, Helvetica, sans-serif",
         comment="CSS font-family stack for the email surface (web-safe only).",
         purpose=(
@@ -187,7 +177,7 @@ _FONTS = {
             "Email clients cannot load web fonts; this stack relies on system fonts."
         ),
     ),
-    "google_url": _key(
+    "font_url": _key(
         value="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
         comment="Google Fonts URL for the document surface web font. Set to empty to skip.",
         purpose=(

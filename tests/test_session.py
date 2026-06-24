@@ -32,8 +32,8 @@ def _cfg(**kwargs):
 # ---------------------------------------------------------------------------
 
 def test_flags_mirror_one_shot_build():
-    state = SessionState(mark="avatar", overrides={"colours.blue": "#111111"})
-    assert state.flags() == {"colours.blue": "#111111", "identity.mark": "avatar"}
+    state = SessionState(mark="avatar", overrides={"colours.primary": "#111111"})
+    assert state.flags() == {"colours.primary": "#111111", "identity.mark": "avatar"}
 
 
 def test_flags_empty_without_mark_or_overrides():
@@ -111,10 +111,10 @@ def test_output_and_dest_mutate_state(tmp_path):
 def test_set_and_unset_overrides(tmp_path):
     _, c = _focused(tmp_path)
     c.onecmd("set colours.accent=#e63946")
-    c.onecmd("set colours.blue=#111111")
-    assert c.state.overrides == {"colours.accent": "#e63946", "colours.blue": "#111111"}
+    c.onecmd("set colours.primary=#111111")
+    assert c.state.overrides == {"colours.accent": "#e63946", "colours.primary": "#111111"}
     c.onecmd("unset colours.accent")
-    assert c.state.overrides == {"colours.blue": "#111111"}
+    assert c.state.overrides == {"colours.primary": "#111111"}
 
 
 def test_reset_all_keeps_file(tmp_path):

@@ -10,7 +10,7 @@ Responsibilities:
         - <h2> → class="section-title".
         - <table> → class="data-table".
     - Embed local images as base64 data: URIs (via assets.py).
-    - Load the web font via a <link> in <head> when google_url is non-empty (KTD7).
+    - Load the web font via a <link> in <head> when font_url is non-empty (KTD7).
     - Include an @media print stylesheet.
     - Render the footer (name + date).
     - Embed the identity mark: monogram box (default) or base64 avatar img.
@@ -113,33 +113,19 @@ def _resolve_doc_date(date_raw: str | None, date_format: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _colour_var_name(key: str) -> str:
-    """Map a snake_case palette key to the mockup's CSS variable name.
+    """Map a snake_case palette key to its CSS variable name.
 
-    Special cases:
-        note_bg_html    → --note-bg
-        important_bg_html → --important-bg
-    All others: underscores → hyphens, prefixed with --.
+    Underscores become hyphens, prefixed with --. e.g. text_muted → --text-muted.
     """
-    if key == "note_bg_html":
-        return "--note-bg"
-    if key == "important_bg_html":
-        return "--important-bg"
-    # note_bg_email and important_bg_email are not exposed as CSS vars on the
-    # document surface (they are email-only values).
     return "--" + key.replace("_", "-")
-
-
-_EMAIL_ONLY_KEYS = {"note_bg_email", "important_bg_email"}
 
 
 def _build_root_vars(colours: Any, fonts: Any) -> str:
     """Emit a CSS :root { ... } block from the resolved palette and fonts."""
     lines: list[str] = ["  :root {"]
-    lines.append(f"    --font: {fonts['family']};")
+    lines.append(f"    --font: {fonts['font']};")
     lines.append("    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;")
     for key, value in colours.items():
-        if key in _EMAIL_ONLY_KEYS:
-            continue
         var_name = _colour_var_name(key)
         lines.append(f"    {var_name}: {value};")
     lines.append("    --white: #ffffff;")
@@ -330,8 +316,8 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
 
   body {{
     font-family: var(--font);
-    color: var(--grey-900);
-    background: var(--grey-50);
+    color: var(--text);
+    background: var(--surface);
     font-size: 10pt;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
@@ -354,7 +340,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   }}
   .letterhead-bar {{
     height: 6px;
-    background: linear-gradient(90deg, var(--blue) 0%, var(--blue-light) 100%);
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
   }}
   .letterhead-row {{
     display: flex;
@@ -371,7 +357,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   .letterhead-monogram {{
     width: 48px; height: 48px;
     border-radius: 10px;
-    background: var(--blue);
+    background: var(--primary);
     color: var(--white);
     font-weight: 800;
     font-size: 17px;
@@ -384,18 +370,18 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   .letterhead-name {{
     font-size: 16px;
     font-weight: 700;
-    color: var(--blue);
+    color: var(--primary);
     line-height: 1.2;
   }}
   .letterhead-role {{
     font-size: 12px;
     font-weight: 600;
-    color: var(--blue-light);
+    color: var(--secondary);
     margin-top: 2px;
   }}
   .letterhead-date {{
     font-size: 12px;
-    color: var(--grey-500);
+    color: var(--text-subtle);
     white-space: nowrap;
     flex-shrink: 0;
   }}
@@ -412,14 +398,14 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   .doc-title {{
     font-size: 28pt;
     font-weight: 800;
-    color: var(--blue);
+    color: var(--primary);
     line-height: 1.15;
     margin-bottom: 6px;
   }}
   .doc-subtitle {{
     font-size: 13pt;
     font-weight: 500;
-    color: var(--blue-light);
+    color: var(--secondary);
     margin-bottom: 28px;
   }}
 
@@ -427,7 +413,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   .section-title {{
     font-size: 18pt;
     font-weight: 700;
-    color: var(--blue);
+    color: var(--primary);
     margin: 2rem 0 0;
     line-height: 1.25;
   }}
@@ -443,13 +429,13 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   h3 {{
     font-size: 12pt;
     font-weight: 700;
-    color: var(--blue);
+    color: var(--primary);
     margin: 1.5rem 0 0.5rem;
   }}
   h4 {{
     font-size: 9.5pt;
     font-weight: 600;
-    color: var(--grey-700);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 1.2rem 0 0.3rem;
@@ -459,7 +445,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   p {{ margin-bottom: 0.8em; line-height: 1.6; }}
   ul, ol {{ margin: 0.5em 0 1em 1.5em; line-height: 1.6; }}
   li {{ margin-bottom: 0.3em; }}
-  a {{ color: var(--blue); text-decoration: none; border-bottom: 1px solid var(--blue-light); }}
+  a {{ color: var(--primary); text-decoration: none; border-bottom: 1px solid var(--secondary); }}
 
   /* ── Alerts ── */
   .alert {{
@@ -477,29 +463,29 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
     letter-spacing: 1px;
     margin-bottom: 5px;
   }}
-  .alert-body p {{ margin-bottom: 0.4em; color: var(--grey-700); }}
+  .alert-body p {{ margin-bottom: 0.4em; color: var(--text-muted); }}
   .alert-body p:last-child {{ margin-bottom: 0; }}
 
-  .alert-note {{ background: var(--note-bg); border-color: var(--blue); }}
-  .alert-note .alert-title {{ color: var(--blue); }}
-  .alert-tip {{ background: var(--rag-green-bg); border-color: var(--rag-green-text); }}
-  .alert-tip .alert-title {{ color: var(--rag-green-text); }}
-  .alert-important {{ background: var(--important-bg); border-color: var(--important); }}
-  .alert-important .alert-title {{ color: var(--important); }}
-  .alert-warning {{ background: var(--rag-amber-bg); border-color: var(--rag-amber-text); }}
-  .alert-warning .alert-title {{ color: var(--rag-amber-text); }}
-  .alert-caution {{ background: var(--rag-red-bg); border-color: var(--rag-red-text); }}
-  .alert-caution .alert-title {{ color: var(--rag-red-text); }}
+  .alert-note {{ background: var(--info-bg); border-color: var(--primary); }}
+  .alert-note .alert-title {{ color: var(--primary); }}
+  .alert-tip {{ background: var(--success-bg); border-color: var(--success-text); }}
+  .alert-tip .alert-title {{ color: var(--success-text); }}
+  .alert-important {{ background: var(--emphasis-bg); border-color: var(--emphasis); }}
+  .alert-important .alert-title {{ color: var(--emphasis); }}
+  .alert-warning {{ background: var(--warning-bg); border-color: var(--warning-text); }}
+  .alert-warning .alert-title {{ color: var(--warning-text); }}
+  .alert-caution {{ background: var(--danger-bg); border-color: var(--danger-text); }}
+  .alert-caution .alert-title {{ color: var(--danger-text); }}
 
   /* ── Blockquote ── */
   blockquote {{
-    background: var(--grey-50);
+    background: var(--surface);
     border-left: 3px solid var(--accent);
     padding: 10px 14px;
     margin: 1rem 0;
     border-radius: 0 4px 4px 0;
     font-size: 9pt;
-    color: var(--grey-700);
+    color: var(--text-muted);
   }}
 
   /* ── Tables ── */
@@ -511,7 +497,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
     font-size: 9pt;
   }}
   .data-table thead th {{
-    background: var(--blue);
+    background: var(--primary);
     color: var(--white);
     font-weight: 700;
     font-size: 8pt;
@@ -522,19 +508,19 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   }}
   .data-table thead th:first-child {{ border-radius: 3px 0 0 0; }}
   .data-table thead th:last-child {{ border-radius: 0 3px 0 0; }}
-  .data-table tbody tr:nth-child(even) {{ background: var(--grey-50); }}
-  .data-table tbody tr:hover {{ background: var(--table-hover); }}
+  .data-table tbody tr:nth-child(even) {{ background: var(--surface); }}
+  .data-table tbody tr:hover {{ background: var(--row-hover); }}
   .data-table tbody td {{
     padding: 10px 12px;
-    border-bottom: 1px solid var(--grey-200);
+    border-bottom: 1px solid var(--border);
     vertical-align: top;
   }}
 
   /* ── Code ── */
   pre {{
     position: relative;
-    background: var(--grey-50);
-    border: 1px solid var(--grey-200);
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 14px 16px;
     margin: 1rem 0 1.5rem;
@@ -548,7 +534,7 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
     font-size: 9pt;
   }}
   p code, li code, td code {{
-    background: var(--grey-200);
+    background: var(--border);
     padding: 1px 4px;
     border-radius: 2px;
     font-size: 8.5pt;
@@ -558,12 +544,12 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   .report-footer {{
     margin-top: 2.5rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--grey-200);
+    border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 8pt;
-    color: var(--grey-500);
+    color: var(--text-subtle);
   }}
 
 {_PRINT_STYLES}
@@ -590,9 +576,9 @@ def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
     # Font link (KTD7): load via Google Fonts when a URL is configured.
     font_link = ""
-    google_url = cfg.fonts.get("google_url", "")
-    if google_url:
-        font_link = f'\n<link href="{google_url}" rel="stylesheet">'
+    font_url = cfg.fonts.get("font_url", "")
+    if font_url:
+        font_link = f'\n<link href="{font_url}" rel="stylesheet">'
 
     # Title block.
     title_block = ""

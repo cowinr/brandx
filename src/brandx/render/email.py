@@ -65,22 +65,21 @@ _AVATAR_HEAVY_WARN_BYTES = 100 * 1024  # 100 KB
 # ---------------------------------------------------------------------------
 
 # Each alert type maps to (bar_colour, background_colour, label_colour).
-# note/important use email-specific palette keys; rag types use the shared values.
-# These are resolved at render time from cfg.colours.
+# All keys are shared across both surfaces; resolved at render time from cfg.colours.
 def _alert_colours(alert_type: str, colours: dict) -> tuple[str, str, str]:
     """Return (bar_colour, bg_colour, label_colour) for an alert type."""
     if alert_type == "note":
-        return colours.get("blue", "#1c2b39"), colours.get("note_bg_email", "#e6f4f2"), colours.get("blue", "#1c2b39")
+        return colours.get("primary", "#1c2b39"), colours.get("info_bg", "#e6f4f2"), colours.get("primary", "#1c2b39")
     if alert_type == "tip":
-        return colours.get("rag_green_text", "#2a7f4f"), colours.get("rag_green_bg", "#e8f5ed"), colours.get("rag_green_text", "#2a7f4f")
+        return colours.get("success_text", "#2a7f4f"), colours.get("success_bg", "#e8f5ed"), colours.get("success_text", "#2a7f4f")
     if alert_type == "important":
-        return colours.get("important", "#b07514"), colours.get("important_bg_email", "#fdf3e3"), colours.get("important", "#b07514")
+        return colours.get("emphasis", "#b07514"), colours.get("emphasis_bg", "#fdf3e3"), colours.get("emphasis", "#b07514")
     if alert_type == "warning":
-        return colours.get("rag_amber_text", "#b07514"), colours.get("rag_amber_bg", "#fdf3e3"), colours.get("rag_amber_text", "#b07514")
+        return colours.get("warning_text", "#b07514"), colours.get("warning_bg", "#fdf3e3"), colours.get("warning_text", "#b07514")
     if alert_type == "caution":
-        return colours.get("rag_red_text", "#b33a3a"), colours.get("rag_red_bg", "#fce8e8"), colours.get("rag_red_text", "#b33a3a")
+        return colours.get("danger_text", "#b33a3a"), colours.get("danger_bg", "#fce8e8"), colours.get("danger_text", "#b33a3a")
     # Unknown type: default to note styling
-    return colours.get("blue", "#1c2b39"), colours.get("note_bg_email", "#e6f4f2"), colours.get("blue", "#1c2b39")
+    return colours.get("primary", "#1c2b39"), colours.get("info_bg", "#e6f4f2"), colours.get("primary", "#1c2b39")
 
 
 _ALERT_LABELS = {
@@ -162,8 +161,8 @@ def _build_alert_table(alert_type: str, body_html: str, cfg: ResolvedConfig) -> 
     colours = dict(cfg.colours)
     bar_colour, bg_colour, label_colour = _alert_colours(alert_type, colours)
     label = _ALERT_LABELS.get(alert_type, alert_type.capitalize())
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
-    grey_700 = colours.get("grey_700", "#46535f")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    text_muted = colours.get("text_muted", "#46535f")
 
     return (
         f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
@@ -174,7 +173,7 @@ def _build_alert_table(alert_type: str, body_html: str, cfg: ResolvedConfig) -> 
         f'<td style="background:{bg_colour};padding:12px 14px;vertical-align:top;">'
         f'<p style="{_font_style(family)}font-size:11px;font-weight:700;text-transform:uppercase;'
         f'letter-spacing:0.8px;color:{label_colour};margin:0 0 6px 0;">{label}</p>'
-        f'<div style="{_font_style(family)}font-size:14px;line-height:1.5;color:{grey_700};margin:0;">'
+        f'<div style="{_font_style(family)}font-size:14px;line-height:1.5;color:{text_muted};margin:0;">'
         f'{body_html}'
         f'</div>'
         f'</td>'
@@ -187,9 +186,9 @@ def _build_blockquote_table(inner_html: str, cfg: ResolvedConfig) -> str:
     """Render a bx:blockquote as a two-cell accent-bar table."""
     colours = dict(cfg.colours)
     accent = colours.get("accent", "#0d8a7d")
-    grey_50 = colours.get("grey_50", "#f4f7f8")
-    grey_700 = colours.get("grey_700", "#46535f")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    surface = colours.get("surface", "#f4f7f8")
+    text_muted = colours.get("text_muted", "#46535f")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     return (
         f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
@@ -197,8 +196,8 @@ def _build_blockquote_table(inner_html: str, cfg: ResolvedConfig) -> str:
         f'<tr>'
         f'<td width="4" bgcolor="{accent}"'
         f' style="width:4px;background:{accent};font-size:0;line-height:0;padding:0;margin:0;">&nbsp;</td>'
-        f'<td style="background:{grey_50};padding:12px 14px;vertical-align:top;">'
-        f'<div style="{_font_style(family)}font-size:14px;line-height:1.5;color:{grey_700};margin:0;">'
+        f'<td style="background:{surface};padding:12px 14px;vertical-align:top;">'
+        f'<div style="{_font_style(family)}font-size:14px;line-height:1.5;color:{text_muted};margin:0;">'
         f'{inner_html.strip()}'
         f'</div>'
         f'</td>'
@@ -210,9 +209,9 @@ def _build_blockquote_table(inner_html: str, cfg: ResolvedConfig) -> str:
 def _build_code_table(pre_html: str, cfg: ResolvedConfig) -> str:
     """Wrap a plain <pre> in a single-cell Outlook-safe table."""
     colours = dict(cfg.colours)
-    grey_50 = colours.get("grey_50", "#f4f7f8")
-    grey_200 = colours.get("grey_200", "#e2e8ec")
-    grey_900 = colours.get("grey_900", "#1f2933")
+    surface = colours.get("surface", "#f4f7f8")
+    border = colours.get("border", "#e2e8ec")
+    text = colours.get("text", "#1f2933")
     mono = "'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace"
 
     # Replace the <pre ...> open tag with our inline-styled version.
@@ -221,7 +220,7 @@ def _build_code_table(pre_html: str, cfg: ResolvedConfig) -> str:
         (
             f'<pre style="font-family:{mono};font-size:13px;line-height:1.5;'
             f'margin:0;padding:0;white-space:pre-wrap;word-wrap:break-word;'
-            f'color:{grey_900};background:transparent;">'
+            f'color:{text};background:transparent;">'
         ),
         pre_html,
         count=1,
@@ -231,7 +230,7 @@ def _build_code_table(pre_html: str, cfg: ResolvedConfig) -> str:
         f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
         f' style="width:100%;border-collapse:collapse;margin:12px 0;">'
         f'<tr>'
-        f'<td style="background:{grey_50};border:1px solid {grey_200};padding:14px 16px;">'
+        f'<td style="background:{surface};border:1px solid {border};padding:14px 16px;">'
         f'{pre_styled}'
         f'</td>'
         f'</tr>'
@@ -288,20 +287,20 @@ def _wrap_code_blocks(html: str, cfg: ResolvedConfig) -> str:
 def _style_headings(html: str, cfg: ResolvedConfig) -> str:
     """Apply inline styles to h2, h3, h4 elements."""
     colours = dict(cfg.colours)
-    blue = colours.get("blue", "#1c2b39")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    primary = colours.get("primary", "#1c2b39")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     h2_style = (
         f"font-family:{family};font-weight:700;"
-        f"color:{blue};margin:0 0 12px 0;line-height:1.3;font-size:20px;"
+        f"color:{primary};margin:0 0 12px 0;line-height:1.3;font-size:20px;"
     )
     h3_style = (
         f"font-family:{family};font-weight:700;"
-        f"color:{blue};margin:20px 0 10px;line-height:1.3;font-size:17px;"
+        f"color:{primary};margin:20px 0 10px;line-height:1.3;font-size:17px;"
     )
     h4_style = (
         f"font-family:{family};font-weight:600;"
-        f"color:{blue};margin:16px 0 8px;line-height:1.3;font-size:14px;"
+        f"color:{primary};margin:16px 0 8px;line-height:1.3;font-size:14px;"
         f"text-transform:uppercase;letter-spacing:0.5px;"
     )
 
@@ -330,12 +329,12 @@ def _style_paragraphs(html: str, cfg: ResolvedConfig) -> str:
     writing a second style= attribute onto the same element.
     """
     colours = dict(cfg.colours)
-    grey_900 = colours.get("grey_900", "#1f2933")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    text = colours.get("text", "#1f2933")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     p_style = (
         f"font-family:{family};font-size:14px;"
-        f"line-height:1.6;color:{grey_900};margin:0 0 12px 0;"
+        f"line-height:1.6;color:{text};margin:0 0 12px 0;"
     )
 
     def _maybe_style(m: re.Match) -> str:
@@ -351,11 +350,11 @@ def _style_paragraphs(html: str, cfg: ResolvedConfig) -> str:
 def _style_lists(html: str, cfg: ResolvedConfig) -> str:
     """Apply inline styles to ul, ol, li elements."""
     colours = dict(cfg.colours)
-    grey_900 = colours.get("grey_900", "#1f2933")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    text = colours.get("text", "#1f2933")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
-    list_style = f"font-family:{family};font-size:14px;color:{grey_900};margin:0 0 12px 16px;padding:0;"
-    li_style = f"font-family:{family};font-size:14px;color:{grey_900};margin:0 0 4px 0;line-height:1.6;"
+    list_style = f"font-family:{family};font-size:14px;color:{text};margin:0 0 12px 16px;padding:0;"
+    li_style = f"font-family:{family};font-size:14px;color:{text};margin:0 0 4px 0;line-height:1.6;"
 
     html = re.sub(r'<ul([^>]*)>', lambda m: f'<ul{m.group(1)} style="{list_style}">', html)
     html = re.sub(r'<ol([^>]*)>', lambda m: f'<ol{m.group(1)} style="{list_style}">', html)
@@ -366,10 +365,10 @@ def _style_lists(html: str, cfg: ResolvedConfig) -> str:
 def _style_links(html: str, cfg: ResolvedConfig) -> str:
     """Apply inline styles to <a> elements."""
     colours = dict(cfg.colours)
-    blue = colours.get("blue", "#1c2b39")
+    primary = colours.get("primary", "#1c2b39")
     return re.sub(
         r'<a([^>]*)>',
-        lambda m: f'<a{m.group(1)} style="color:{blue};text-decoration:underline;">',
+        lambda m: f'<a{m.group(1)} style="color:{primary};text-decoration:underline;">',
         html,
     )
 
@@ -377,12 +376,12 @@ def _style_links(html: str, cfg: ResolvedConfig) -> str:
 def _style_inline_code(html: str, cfg: ResolvedConfig) -> str:
     """Apply inline styles to <code> elements (inline code only, not inside <pre>)."""
     colours = dict(cfg.colours)
-    grey_200 = colours.get("grey_200", "#e2e8ec")
+    border = colours.get("border", "#e2e8ec")
     mono = "'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace"
 
     code_style = (
         f"font-family:{mono};font-size:13px;"
-        f"background:{grey_200};padding:1px 4px;border-radius:2px;"
+        f"background:{border};padding:1px 4px;border-radius:2px;"
     )
     # Only style <code> not preceded immediately by <pre> (i.e. inline code).
     # We do a simple global replacement; <pre> blocks have already been wrapped
@@ -413,10 +412,10 @@ def _apply_zebra_striping(html: str, cfg: ResolvedConfig) -> str:
     """
     colours = dict(cfg.colours)
     white = "#ffffff"
-    grey_50 = colours.get("grey_50", "#f4f7f8")
-    grey_200 = colours.get("grey_200", "#e2e8ec")
-    blue = colours.get("blue", "#1c2b39")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    surface = colours.get("surface", "#f4f7f8")
+    border = colours.get("border", "#e2e8ec")
+    primary = colours.get("primary", "#1c2b39")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     def _style_table(table_m: re.Match) -> str:
         table_html = table_m.group(0)
@@ -439,10 +438,10 @@ def _apply_zebra_striping(html: str, cfg: ResolvedConfig) -> str:
 
         # Style <th> cells (use \b to avoid matching <thead>).
         th_style = (
-            f"background:{blue};color:#ffffff;font-family:{family};"
+            f"background:{primary};color:#ffffff;font-family:{family};"
             f"font-size:12px;font-weight:700;text-transform:uppercase;"
             f"letter-spacing:0.5px;padding:10px 12px;text-align:left;"
-            f"border-bottom:2px solid {blue};"
+            f"border-bottom:2px solid {primary};"
         )
         table_html = re.sub(
             r'<th\b([^>]*)>',
@@ -458,7 +457,7 @@ def _apply_zebra_striping(html: str, cfg: ResolvedConfig) -> str:
             def _stripe_row(row_m: re.Match) -> str:
                 nonlocal row_index
                 row_index += 1
-                bg = white if row_index % 2 == 1 else grey_50
+                bg = white if row_index % 2 == 1 else surface
                 row_html = row_m.group(0)
 
                 def _style_td(td_m: re.Match) -> str:
@@ -466,7 +465,7 @@ def _apply_zebra_striping(html: str, cfg: ResolvedConfig) -> str:
                     base_td_style = (
                         f"font-family:{family};font-size:13px;"
                         f"padding:8px 12px;vertical-align:top;"
-                        f"border-bottom:1px solid {grey_200};"
+                        f"border-bottom:1px solid {border};"
                         f"background:{bg};"
                     )
                     # Append any existing style properties (e.g. color for RAG cells).
@@ -527,8 +526,8 @@ def _transform_body(body_html: str, cfg: ResolvedConfig, source_dir: Path) -> st
 def _build_email_mark(cfg: ResolvedConfig) -> str:
     """Render the email letterhead mark: monogram div or embedded avatar img."""
     colours = dict(cfg.colours)
-    blue = colours.get("blue", "#1c2b39")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    primary = colours.get("primary", "#1c2b39")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     if cfg.mark == "avatar" and cfg.avatar_email is not None:
         data_uri = file_to_data_uri(cfg.avatar_email)
@@ -553,7 +552,7 @@ def _build_email_mark(cfg: ResolvedConfig) -> str:
 
     # Monogram box (default).
     return (
-        f'<div style="width:40px;height:40px;border-radius:9px;background:{blue};color:#ffffff;'
+        f'<div style="width:40px;height:40px;border-radius:9px;background:{primary};color:#ffffff;'
         f'font-family:{family};font-weight:800;'
         f'font-size:15px;text-align:center;line-height:40px;">'
         f'{_html_lib.escape(cfg.initials)}'
@@ -567,9 +566,9 @@ def _build_email_letterhead(cfg: ResolvedConfig) -> str:
     Differs from the document letterhead: no date, no footer, teal bottom border.
     """
     colours = dict(cfg.colours)
-    blue = colours.get("blue", "#1c2b39")
-    blue_light = colours.get("blue_light", "#0d8a7d")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    primary = colours.get("primary", "#1c2b39")
+    secondary = colours.get("secondary", "#0d8a7d")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     mark = _build_email_mark(cfg)
 
@@ -577,7 +576,7 @@ def _build_email_letterhead(cfg: ResolvedConfig) -> str:
     if cfg.role:
         role_cell = (
             f'<div style="font-family:{family};font-weight:600;'
-            f'font-size:12px;color:{blue_light};">'
+            f'font-size:12px;color:{secondary};">'
             f'{_html_lib.escape(cfg.role)}'
             f'</div>'
         )
@@ -585,7 +584,7 @@ def _build_email_letterhead(cfg: ResolvedConfig) -> str:
     return (
         f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
         f' style="border-collapse:collapse;width:100%;margin:0 0 20px;">'
-        f'<tr><td style="padding:0 0 12px;border-bottom:2px solid {blue_light};">'
+        f'<tr><td style="padding:0 0 12px;border-bottom:2px solid {secondary};">'
         f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
         f' style="border-collapse:collapse;">'
         f'<tr>'
@@ -594,7 +593,7 @@ def _build_email_letterhead(cfg: ResolvedConfig) -> str:
         f'</td>'
         f'<td style="vertical-align:middle;">'
         f'<div style="font-family:{family};font-weight:700;'
-        f'font-size:15px;color:{blue};line-height:1.2;">'
+        f'font-size:15px;color:{primary};line-height:1.2;">'
         f'{_html_lib.escape(cfg.name)}'
         f'</div>'
         f'{role_cell}'
@@ -616,22 +615,22 @@ def _build_title_block(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
         return ""
 
     colours = dict(cfg.colours)
-    blue = colours.get("blue", "#1c2b39")
-    blue_light = colours.get("blue_light", "#0d8a7d")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    primary = colours.get("primary", "#1c2b39")
+    secondary = colours.get("secondary", "#0d8a7d")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     parts: list[str] = []
     if doc.title:
         parts.append(
             f'<h2 style="font-family:{family};font-weight:800;'
-            f'color:{blue};margin:0 0 8px 0;line-height:1.2;font-size:24px;">'
+            f'color:{primary};margin:0 0 8px 0;line-height:1.2;font-size:24px;">'
             f'{_html_lib.escape(doc.title)}'
             f'</h2>'
         )
     if doc.subtitle:
         parts.append(
             f'<p style="font-family:{family};font-size:14px;'
-            f'color:{blue_light};margin:0 0 20px 0;font-weight:500;">'
+            f'color:{secondary};margin:0 0 20px 0;font-weight:500;">'
             f'{_html_lib.escape(doc.subtitle)}'
             f'</p>'
         )
@@ -670,8 +669,8 @@ def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
         no <style> block).
     """
     colours = dict(cfg.colours)
-    grey_900 = colours.get("grey_900", "#1f2933")
-    family = cfg.fonts.get("family_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
+    text = colours.get("text", "#1f2933")
+    family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
     letterhead = _build_email_letterhead(cfg)
     title_block = _build_title_block(doc, cfg)
@@ -692,7 +691,7 @@ def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
 <table role="presentation" border="0" cellpadding="0" cellspacing="0"
   style="max-width:960px;width:100%;border-collapse:collapse;background:#ffffff;">
-<tr><td style="padding:20px 24px;font-family:{family};font-size:14px;color:{grey_900};">
+<tr><td style="padding:20px 24px;font-family:{family};font-size:14px;color:{text};">
 
 {letterhead}
 {title_block}

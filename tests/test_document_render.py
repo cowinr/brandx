@@ -67,13 +67,13 @@ class TestStyleBlock:
         html = _render("Hello.")
         assert ":root {" in html
 
-    def test_blue_colour_var(self):
+    def test_primary_colour_var(self):
         cfg = resolve(
-            home_config={"colours": {"blue": "#112233"}},
+            home_config={"colours": {"primary": "#112233"}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
-        assert "--blue: #112233" in html
+        assert "--primary: #112233" in html
 
     def test_accent_colour_var(self):
         cfg = resolve(
@@ -83,15 +83,15 @@ class TestStyleBlock:
         html = _render("Hello.", cfg=cfg)
         assert "--accent: #cafeba" in html
 
-    def test_note_bg_mapped_to_note_bg_var(self):
+    def test_note_bg_mapped_to_info_bg_var(self):
         html = _render("Hello.")
-        # note_bg_html → --note-bg
-        assert "--note-bg:" in html
+        # info_bg → --info-bg
+        assert "--info-bg:" in html
 
-    def test_important_bg_mapped_to_important_bg_var(self):
+    def test_important_bg_mapped_to_emphasis_bg_var(self):
         html = _render("Hello.")
-        # important_bg_html → --important-bg
-        assert "--important-bg:" in html
+        # emphasis_bg → --emphasis-bg
+        assert "--emphasis-bg:" in html
 
     def test_font_family_var_present(self):
         html = _render("Hello.")
@@ -103,12 +103,12 @@ class TestStyleBlock:
 
     def test_google_font_link_present(self):
         html = _render("Hello.")
-        # Default config has a google_url
+        # Default config has a font_url
         assert 'fonts.googleapis.com' in html
 
     def test_no_google_font_link_when_url_empty(self):
         cfg = resolve(
-            home_config={"fonts": {"google_url": ""}},
+            home_config={"fonts": {"font_url": ""}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)

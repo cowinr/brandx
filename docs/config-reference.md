@@ -60,23 +60,23 @@ Selects the letterhead mark. 'monogram' shows derived initials; 'avatar' shows t
 
 ## `colours`
 
-**`colours.blue`**
+**`colours.primary`**
 
 Default: `#1c2b39`
 
 Used for primary heading and structural elements across both surfaces.
 
-*Config comment: Primary dark colour — headings, table headers, letterhead text.*
+*Config comment: Primary brand colour — headings, table headers, letterhead text.*
 
 ---
 
-**`colours.blue_light`**
+**`colours.secondary`**
 
 Default: `#0d8a7d`
 
-Paired with 'blue' for the gradient bar and role text.
+Paired with 'primary' for the gradient bar and role text.
 
-*Config comment: Secondary accent — role line, heading underlines, links.*
+*Config comment: Secondary brand colour — role line, heading underlines, links.*
 
 ---
 
@@ -90,7 +90,7 @@ Used for accent borders on plain blockquotes and the letterhead gradient.
 
 ---
 
-**`colours.important`**
+**`colours.emphasis`**
 
 Default: `#b07514`
 
@@ -100,7 +100,7 @@ Callout bar and label colour for the IMPORTANT alert type.
 
 ---
 
-**`colours.grey_900`**
+**`colours.text`**
 
 Default: `#1f2933`
 
@@ -110,7 +110,7 @@ Primary body text colour on both surfaces.
 
 ---
 
-**`colours.grey_700`**
+**`colours.text_muted`**
 
 Default: `#46535f`
 
@@ -120,7 +120,7 @@ Used inside callouts and blockquotes where a slightly lighter tone aids hierarch
 
 ---
 
-**`colours.grey_500`**
+**`colours.text_subtle`**
 
 Default: `#7c8893`
 
@@ -130,7 +130,7 @@ Date and footer text in the letterhead.
 
 ---
 
-**`colours.grey_200`**
+**`colours.border`**
 
 Default: `#e2e8ec`
 
@@ -140,7 +140,7 @@ Table row dividers, code-block borders, section rules.
 
 ---
 
-**`colours.grey_50`**
+**`colours.surface`**
 
 Default: `#f4f7f8`
 
@@ -150,7 +150,7 @@ Alternate table row fill and code-block background on the document surface.
 
 ---
 
-**`colours.rag_green_bg`**
+**`colours.success_bg`**
 
 Default: `#e8f5ed`
 
@@ -160,7 +160,7 @@ Alert background — TIP callout and green RAG status cells.
 
 ---
 
-**`colours.rag_green_text`**
+**`colours.success_text`**
 
 Default: `#2a7f4f`
 
@@ -170,7 +170,7 @@ Alert label and bar colour for TIP callouts.
 
 ---
 
-**`colours.rag_amber_bg`**
+**`colours.warning_bg`**
 
 Default: `#fdf3e3`
 
@@ -180,7 +180,7 @@ Alert background — WARNING callout and amber RAG status cells.
 
 ---
 
-**`colours.rag_amber_text`**
+**`colours.warning_text`**
 
 Default: `#b07514`
 
@@ -190,7 +190,7 @@ Alert label and bar colour for WARNING callouts.
 
 ---
 
-**`colours.rag_red_bg`**
+**`colours.danger_bg`**
 
 Default: `#fce8e8`
 
@@ -200,7 +200,7 @@ Alert background — CAUTION callout and red RAG status cells.
 
 ---
 
-**`colours.rag_red_text`**
+**`colours.danger_text`**
 
 Default: `#b33a3a`
 
@@ -210,47 +210,27 @@ Alert label and bar colour for CAUTION callouts.
 
 ---
 
-**`colours.note_bg_html`**
+**`colours.info_bg`**
 
 Default: `#e6f4f2`
 
-NOTE callout background on the document renderer.
+NOTE callout background on the document and email renderers.
 
-*Config comment: Background fill for [!NOTE] on the document surface.*
-
----
-
-**`colours.note_bg_email`**
-
-Default: `#e6f4f2`
-
-NOTE callout background on the email renderer. May differ from note_bg_html.
-
-*Config comment: Background fill for [!NOTE] on the email surface.*
+*Config comment: Background fill for [!NOTE] callouts on both surfaces.*
 
 ---
 
-**`colours.important_bg_html`**
+**`colours.emphasis_bg`**
 
 Default: `#fdf3e3`
 
-IMPORTANT callout background on the document renderer.
+IMPORTANT callout background on the document and email renderers.
 
-*Config comment: Background fill for [!IMPORTANT] on the document surface.*
-
----
-
-**`colours.important_bg_email`**
-
-Default: `#fdf3e3`
-
-IMPORTANT callout background on the email renderer.
-
-*Config comment: Background fill for [!IMPORTANT] on the email surface.*
+*Config comment: Background fill for [!IMPORTANT] callouts on both surfaces.*
 
 ---
 
-**`colours.table_hover`**
+**`colours.row_hover`**
 
 Default: `#e9f3f1`
 
@@ -262,7 +242,7 @@ Hover state for table rows on the document surface.
 
 ## `fonts`
 
-**`fonts.family`**
+**`fonts.font`**
 
 Default: `'Inter', -apple-system, 'Segoe UI', Arial, sans-serif`
 
@@ -272,7 +252,7 @@ Applied via CSS variable on the document renderer.
 
 ---
 
-**`fonts.family_email`**
+**`fonts.font_email`**
 
 Default: `'Inter', 'Segoe UI', Arial, Helvetica, sans-serif`
 
@@ -282,7 +262,7 @@ Inline-styled on every element in the email renderer. Email clients cannot load 
 
 ---
 
-**`fonts.google_url`**
+**`fonts.font_url`**
 
 Default: `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap`
 

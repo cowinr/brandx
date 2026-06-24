@@ -59,7 +59,7 @@ class TestGenerateInitYaml:
     def test_colours_block_in_output(self):
         yaml = generate_init_yaml()
         assert "colours:" in yaml
-        assert "blue:" in yaml
+        assert "primary:" in yaml
 
 
 class TestRunInit:
@@ -97,10 +97,10 @@ class TestRunInit:
         parsed = pyyaml.safe_load(target.read_text())
         assert isinstance(parsed, dict)
 
-    def test_written_file_contains_colours_blue(self, tmp_path):
+    def test_written_file_contains_colours_primary(self, tmp_path):
         import yaml as pyyaml
         target = tmp_path / "brand.yaml"
         run_init(target_path=target)
         parsed = pyyaml.safe_load(target.read_text())
         assert "colours" in parsed
-        assert "blue" in parsed["colours"]
+        assert "primary" in parsed["colours"]

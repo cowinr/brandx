@@ -56,9 +56,9 @@ class TestGenerateReferenceMarkdown:
     def test_regeneration_reflects_runtime_defaults(self, monkeypatch):
         """install AE3: a changed default appears in the regenerated reference."""
         import brandx.config.defaults as defs
-        original = defs.DEFAULTS["colours"]["blue"]["value"]
+        original = defs.DEFAULTS["colours"]["primary"]["value"]
         try:
-            defs.DEFAULTS["colours"]["blue"]["value"] = "#abcdef"
+            defs.DEFAULTS["colours"]["primary"]["value"] = "#abcdef"
             import importlib
             import brandx.docsgen
             importlib.reload(brandx.docsgen)
@@ -66,7 +66,7 @@ class TestGenerateReferenceMarkdown:
             md = gen()
             assert "#abcdef" in md
         finally:
-            defs.DEFAULTS["colours"]["blue"]["value"] = original
+            defs.DEFAULTS["colours"]["primary"]["value"] = original
 
 
 class TestWriteReference:
