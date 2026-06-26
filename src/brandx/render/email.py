@@ -356,9 +356,16 @@ def _style_lists(html: str, cfg: ResolvedConfig) -> str:
     list_style = f"font-family:{family};font-size:14px;color:{text};margin:0 0 12px 16px;padding:0;"
     li_style = f"font-family:{family};font-size:14px;color:{text};margin:0 0 4px 0;line-height:1.6;"
 
+    task_li_style = li_style + "list-style:none;margin-left:-16px;"
+
+    def _style_li(m: re.Match) -> str:
+        attrs = m.group(1)
+        style = task_li_style if "task-list-item" in attrs else li_style
+        return f'<li{attrs} style="{style}">'
+
     html = re.sub(r'<ul([^>]*)>', lambda m: f'<ul{m.group(1)} style="{list_style}">', html)
     html = re.sub(r'<ol([^>]*)>', lambda m: f'<ol{m.group(1)} style="{list_style}">', html)
-    html = re.sub(r'<li([^>]*)>', lambda m: f'<li{m.group(1)} style="{li_style}">', html)
+    html = re.sub(r'<li([^>]*)>', _style_li, html)
     return html
 
 

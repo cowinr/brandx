@@ -76,7 +76,7 @@ def test_version():
         text=True,
     )
     assert result.returncode == 0
-    assert "1.0.0" in result.stdout
+    assert "1.0.1" in result.stdout
 
 
 def test_no_subcommand_launches_session_and_exits_zero():

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "brandx"
-version = "1.0.0"
+version = "1.0.1"
 description = "Generic identity-free markdown-to-branded-document tool driven by a YAML brand config."
 readme = "README.md"
 license = {text = "MIT"}

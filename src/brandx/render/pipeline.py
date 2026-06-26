@@ -27,6 +27,7 @@ from typing import Any
 import yaml
 
 from brandx.render.callouts import process_alerts
+from brandx.render.tasklists import process_tasklists
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +172,7 @@ def parse_text(text: str, source_dir: Path | None = None) -> ParsedDocument:
         body_html = re.sub(r"<h1[^>]*>.*?</h1>\s*", "", body_html, count=1)
 
     body_html = process_alerts(body_html)
+    body_html = process_tasklists(body_html)
 
     return ParsedDocument(
         title=title,

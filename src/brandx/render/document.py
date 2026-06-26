@@ -445,6 +445,8 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
   p {{ margin-bottom: 0.8em; line-height: 1.6; }}
   ul, ol {{ margin: 0.5em 0 1em 1.5em; line-height: 1.6; }}
   li {{ margin-bottom: 0.3em; }}
+  li.task-list-item {{ list-style: none; margin-left: -1.2em; }}
+  .task-checkbox {{ font-family: "Segoe UI Symbol", "Apple Symbols", sans-serif; margin-right: 0.4em; color: var(--primary); }}
   a {{ color: var(--primary); text-decoration: none; border-bottom: 1px solid var(--secondary); }}
 
   /* ── Alerts ── */
