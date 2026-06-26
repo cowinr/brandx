@@ -6,10 +6,11 @@ post-processes the structural HTML, rewriting those items as checkbox list
 items that render correctly on both surfaces (branded HTML document and
 Outlook-safe email).
 
-A Unicode ballot-box glyph (☐ / ☑) is used rather than an
-``<input type="checkbox">``: the glyph renders identically in browsers and in
-Outlook's Word engine, which does not render form controls. This keeps a single
-code path for both renderers.
+A Unicode emoji glyph (⬜ / ✅) is used rather than an
+``<input type="checkbox">``: it needs no form control (which Outlook's Word
+engine will not render) and keeps a single code path for both renderers. Note
+that classic Outlook renders emoji unreliably; the branded HTML document is the
+primary surface.
 
 Output: each rewritten ``<li>`` gains the ``task-list-item`` class and its
 marker becomes a ``task-checkbox`` span carrying the glyph. The document
@@ -24,8 +25,8 @@ from __future__ import annotations
 
 import re
 
-_UNCHECKED = "☐"  # ☐ BALLOT BOX
-_CHECKED = "☑"  # ☑ BALLOT BOX WITH CHECK
+_UNCHECKED = "⬜"  # ⬜ WHITE LARGE SQUARE
+_CHECKED = "✅"  # ✅ WHITE HEAVY CHECK MARK (check mark button)
 
 # Matches a task-list marker at the very start of an <li>'s content. For simple
 # items python-markdown emits `<li>[ ] text</li>`; for items with block content
