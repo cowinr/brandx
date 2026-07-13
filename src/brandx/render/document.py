@@ -9,7 +9,7 @@ Responsibilities:
         - bx:blockquote markers → styled <blockquote>.
         - <h2> → class="section-title".
         - <table> → class="data-table".
-    - Embed local images as base64 data: URIs (via assets.py).
+    - Embed local images as base64 data: URIs (via assets.py), constrained to the page width.
     - Load the web font via a <link> in <head> when font_url is non-empty (KTD7).
     - Include an @media print stylesheet.
     - Render the footer (name + date).
@@ -300,6 +300,7 @@ _PRINT_STYLES = """\
     }
     .alert { page-break-inside: avoid; }
     .data-table { page-break-inside: avoid; }
+    .page img { page-break-inside: avoid; }
     pre { page-break-inside: avoid; overflow-x: visible; white-space: pre-wrap; }
     a { border-bottom: none; }
   }"""
@@ -540,6 +541,13 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
     padding: 1px 4px;
     border-radius: 2px;
     font-size: 8.5pt;
+  }}
+
+  /* ── Images ── */
+  /* Scoped to .page so the letterhead's fixed-size avatar is left alone. */
+  .page img {{
+    max-width: 100%;
+    height: auto;
   }}
 
   /* ── Footer ── */

@@ -101,6 +101,17 @@ class TestStyleBlock:
         html = _render("Hello.")
         assert "@media print" in html
 
+    def test_body_images_constrained_to_page_width(self):
+        """A full-resolution screenshot must not burst out of the page."""
+        html = _render("Hello.")
+        assert ".page img {" in html
+        assert "max-width: 100%" in html
+
+    def test_image_constraint_scoped_to_page(self):
+        """The rule must not catch the letterhead's fixed-size avatar."""
+        html = _render("Hello.")
+        assert "\n  img {" not in html
+
     def test_google_font_link_present(self):
         html = _render("Hello.")
         # Default config has a font_url
