@@ -63,6 +63,12 @@ def _add_render_subcommand(subparsers):
     sub = subparsers.add_parser(
         "render",
         help="Render a markdown file to a branded document or Outlook-safe email.",
+        description=(
+            "Render a markdown file to a branded document or Outlook-safe email. "
+            "Pick one destination; precedence is --clipboard, then -o/--output, "
+            "then --preview. With no destination flag, the HTML is written to "
+            "stdout so it can be piped."
+        ),
     )
     sub.add_argument("input", metavar="FILE", help="Markdown file to render.")
     sub.add_argument(
@@ -77,7 +83,7 @@ def _add_render_subcommand(subparsers):
     sub.add_argument(
         "--preview",
         action="store_true",
-        help="Open a temporary browser preview (prints HTML to stdout when no destination is given).",
+        help="Write to a temp file and open it in the browser.",
     )
     sub.add_argument(
         "--clipboard",
