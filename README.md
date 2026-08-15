@@ -80,11 +80,14 @@ Every key has a default, so you only need to set what you want to change.
 brandx render examples/sample-note.md -o note.html
 ```
 
-Add `--preview` to open the result in a browser instead of (or alongside) writing a file:
+Add `--preview` to open the result in a browser instead of writing a file. To write a file and open it as well, pair `-o` with `--open`:
 
 ```bash
 brandx render examples/sample-note.md --preview
+brandx render examples/sample-note.md -o note.html --open
 ```
+
+With no destination flag at all, the HTML goes to stdout so it can be piped.
 
 **4. Render an Outlook-safe email**
 
