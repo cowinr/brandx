@@ -10,6 +10,8 @@ Responsibilities:
         - <h2> → class="section-title".
         - <table> → class="data-table".
     - Embed local images as base64 data: URIs (via assets.py), constrained to the page width.
+    - Substitute bx:mermaid markers with an embedded base64 SVG <img>, or the
+      escaped diagram source as a fallback when rendering was unavailable.
     - Load the web font via a <link> in <head> when font_url is non-empty (KTD7).
     - Include an @media print stylesheet.
     - Render the footer (name + date).
@@ -36,6 +38,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import html as _html_lib
 import re
 import sys
@@ -45,6 +48,7 @@ from typing import Any
 
 from brandx.config.resolver import ResolvedConfig
 from brandx.render.assets import embed_images, file_to_data_uri
+from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
 
 
@@ -227,6 +231,58 @@ def _transform_body(body_html: str, source_dir: Path) -> str:
     body_html = _unwrap_codehilite(body_html)
     body_html = embed_images(body_html, source_dir)
     return body_html
+
+
+# ---------------------------------------------------------------------------
+# Diagrams
+# ---------------------------------------------------------------------------
+
+_VIEWBOX_RE = re.compile(
+    r'viewBox="\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)\s*"'
+)
+
+
+def _fix_svg_root(svg_text: str) -> str:
+    """Give the SVG root explicit pixel width/height so it embeds reliably.
+
+    The size mmdc puts on the root element cannot be trusted: it is usually
+    width="100%" with no height, but some diagrams come back with a degenerate
+    width="10" height="10", and the viewBox origin is not always "0 0". The
+    viewBox's third and fourth values are the only reliable size, so they
+    replace whatever the root claims.
+    """
+    end = svg_text.find(">")
+    if end == -1:
+        return svg_text
+    root, rest = svg_text[: end + 1], svg_text[end + 1 :]
+
+    m = _VIEWBOX_RE.search(root)
+    if m is None:
+        return svg_text
+    width = round(float(m.group(3)))
+    height = round(float(m.group(4)))
+    if width <= 0 or height <= 0:
+        return svg_text
+
+    root, changed = re.subn(r'\swidth="[^"]*"', f' width="{width}"', root, count=1)
+    if not changed:
+        root = root.replace("<svg", f'<svg width="{width}"', 1)
+    root, changed = re.subn(r'\sheight="[^"]*"', f' height="{height}"', root, count=1)
+    if not changed:
+        root = root.replace("<svg", f'<svg height="{height}"', 1)
+    return root + rest
+
+
+def _diagram_img(svg_text: str, _index: int) -> str:
+    """build_image for substitute(): embed a rendered diagram SVG as a base64 <img>."""
+    fixed = _fix_svg_root(svg_text)
+    encoded = base64.b64encode(fixed.encode("utf-8")).decode("ascii")
+    return f'<img src="data:image/svg+xml;base64,{encoded}" alt="Diagram">'
+
+
+def _diagram_fallback(source: str) -> str:
+    """build_fallback for substitute(): show the mermaid source as a plain code block."""
+    return f"<pre><code>{_html_lib.escape(source)}</code></pre>"
 
 
 # ---------------------------------------------------------------------------
@@ -603,6 +659,11 @@ def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
     # Body transformations.
     body = _transform_body(doc.body_html, doc.source_dir)
+
+    # Diagrams: rendered after the existing body processing, since a rendered
+    # <img> or an escaped fallback code block needs no further transformation.
+    rendered_diagrams = render_diagrams(doc.diagrams, cfg, "svg")
+    body = substitute(body, rendered_diagrams, doc.diagrams, "svg", _diagram_img, _diagram_fallback)
 
     letterhead = _build_letterhead(cfg, date_str)
 

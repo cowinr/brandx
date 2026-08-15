@@ -128,13 +128,69 @@ The same key name at a higher layer wins. Nested blocks (such as `colours`) are 
 
 Full key listing with defaults and descriptions: [`docs/config-reference.md`](docs/config-reference.md).
 
-The reference is generated from the single application-defaults source — run `brandx docsgen` to regenerate it after changing defaults. It cannot drift from the code.
+The reference is generated from the single application-defaults source. Regenerate it after changing defaults:
+
+```bash
+uv run python -c "from brandx.docsgen import write_reference; write_reference('docs/config-reference.md')"
+```
+
+There is no `docsgen` subcommand and nothing runs this for you, so the reference drifts from the code if the step is skipped.
 
 ## Output surfaces
 
-**Document** — a branded HTML page with a web font (`<link>`), a `<style>` block with CSS variables built from your palette, syntax-highlighted fenced code blocks, a print stylesheet, and a letterhead with your mark (monogram or avatar).
+**Document** — a branded HTML page with a web font (`<link>`), a `<style>` block with CSS variables built from your palette, syntax-highlighted fenced code blocks, embedded diagrams (see [Diagrams](#diagrams)), a print stylesheet, and a letterhead with your mark (monogram or avatar).
 
-**Email** — 100% inline styles, presentation-table layout, Outlook-safe callout bars, plain monospace code (no syntax highlighting; email clients strip class-based styles), web-safe font stack, and base64-embedded avatar. Prints a warning when total size approaches the Gmail clip threshold.
+**Email** — 100% inline styles, presentation-table layout, Outlook-safe callout bars, plain monospace code (no syntax highlighting; email clients strip class-based styles), embedded diagrams (see [Diagrams](#diagrams)), web-safe font stack, and base64-embedded avatar. Prints a warning when total size approaches the Gmail clip threshold.
+
+## Diagrams
+
+A `` ```mermaid `` fenced code block renders as an embedded diagram:
+
+````markdown
+```mermaid
+flowchart LR
+    Start --> Finish
+```
+````
+
+In a document the diagram is embedded as an inline base64 SVG. In an email it is embedded as an inline base64 PNG, sized for Outlook. Both are self-contained, so the output makes no external requests to display them.
+
+Rendering a diagram needs the mermaid CLI:
+
+```bash
+npm install -g @mermaid-js/mermaid-cli
+```
+
+Without it, brandx still renders the rest of the document. The mermaid source appears as a plain code block instead of a diagram, and one warning prints to stderr. If you never draw diagrams, you need no Node.js install at all.
+
+The mermaid CLI also needs a Chrome or Chromium browser, and this is the part that catches people out. The CLI bundles its own Puppeteer, which looks for a browser it downloaded itself and fails with "Could not find Chrome", even when the CLI is installed correctly. brandx works around this by finding an installed browser for you, checking in this order: the `BRANDX_CHROME` environment variable, then `PUPPETEER_EXECUTABLE_PATH`, then the common macOS application locations, then `google-chrome` and `chromium` on PATH.
+
+If none of these find a browser, point `BRANDX_CHROME` at one:
+
+```bash
+export BRANDX_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+```
+
+Or install a headless Chrome build for the CLI's own use:
+
+```bash
+npx puppeteer browsers install chrome-headless-shell
+```
+
+Diagrams take their colours from your brand palette by default, controlled by the `diagrams` block in the config:
+
+```yaml
+diagrams:
+  enabled: true      # render mermaid fences as diagrams
+  theme: brand       # brand, default, forest, dark, neutral
+  background: white  # background colour behind the diagram
+  scale: 2           # Puppeteer scale factor for the email PNG
+  max_width: 912     # maximum displayed width in px for a diagram in an email
+```
+
+Set `theme: default` (or `forest`, `dark`, `neutral`) to opt out of brand colouring and get stock mermaid styling instead.
+
+Rendered diagrams are cached under `~/.cache/brandx/diagrams/`, keyed by content, so an unchanged diagram costs nothing on a re-render.
 
 ## Selecting the identity mark
 

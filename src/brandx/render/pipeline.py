@@ -4,6 +4,9 @@ Responsibilities:
     - Parse YAML frontmatter from a markdown file (real YAML via pyyaml, nested keys).
     - Extract the document title (frontmatter wins; otherwise the first H1, which is
       then stripped from the body so it is not rendered twice).
+    - Extract fenced ```mermaid blocks from the raw markdown before conversion,
+      replacing each with a placeholder marker so each renderer can substitute its
+      own diagram image (see diagrams.py for why this runs before md.convert()).
     - Run python-markdown with the KTD1 extension set to produce structural HTML.
     - Reset the markdown instance between documents to avoid cross-document state.
     - Call callouts.split_alerts() so each renderer receives pre-processed alert HTML.
@@ -27,6 +30,7 @@ from typing import Any
 import yaml
 
 from brandx.render.callouts import process_alerts
+from brandx.render.diagrams import extract_diagrams
 from brandx.render.tasklists import process_tasklists
 
 
@@ -119,6 +123,9 @@ class ParsedDocument:
                    with alerts already processed by callouts.process_alerts().
         title_from_heading: True when the title was extracted from the first H1.
         source_dir: Directory of the source file (for relative asset resolution).
+        diagrams: Mermaid diagram sources extracted from the raw markdown, in
+                  document order, referenced by <!-- bx:mermaid id="N" --> markers
+                  in body_html.
     """
 
     title: str
@@ -129,6 +136,7 @@ class ParsedDocument:
     body_html: str
     title_from_heading: bool
     source_dir: Path = field(default_factory=Path)
+    diagrams: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -163,6 +171,7 @@ def parse_text(text: str, source_dir: Path | None = None) -> ParsedDocument:
 
     meta, body = _parse_frontmatter(text)
     title, body, title_from_heading = _extract_title(meta, body)
+    body, diagrams = extract_diagrams(body)
 
     md = _make_md()
     body_html = md.convert(body)
@@ -183,4 +192,5 @@ def parse_text(text: str, source_dir: Path | None = None) -> ParsedDocument:
         body_html=body_html,
         title_from_heading=title_from_heading,
         source_dir=source_dir,
+        diagrams=diagrams,
     )

@@ -283,3 +283,55 @@ Controls how the document/email date is rendered in the letterhead.
 *Config comment: Date display format. Named formats: 'long-british' (8 April 2026), 'iso' (2026-04-08), 'us' (April 8, 2026), 'eu' (08.04.2026). Or a strftime pattern, e.g. '%%d/%%m/%%Y'.*
 
 ---
+
+## `diagrams`
+
+**`diagrams.enabled`**
+
+Default: `True`
+
+Turns mermaid diagram rendering on or off across both surfaces.
+
+*Config comment: Whether fenced mermaid blocks are rendered as diagrams.*
+
+---
+
+**`diagrams.theme`**
+
+Default: `brand`
+
+Selects the mermaid theme used to render diagrams.
+
+*Config comment: Diagram theme. Accepted values: 'brand' (uses the palette below), 'default', 'forest', 'dark', 'neutral'.*
+
+---
+
+**`diagrams.background`**
+
+Default: `white`
+
+Background colour passed to the mermaid renderer.
+
+*Config comment: Diagram canvas background colour. 'transparent' is accepted but renders black in Outlook dark mode, so white is the safe default for email.*
+
+---
+
+**`diagrams.scale`**
+
+Default: `2`
+
+Controls the resolution of the rendered email PNG.
+
+*Config comment: Puppeteer scale factor used for the email PNG. Ignored for the document SVG.*
+
+---
+
+**`diagrams.max_width`**
+
+Default: `912`
+
+Caps a diagram's displayed width so it fits the email content column.
+
+*Config comment: Maximum displayed width in px for a diagram in an email.*
+
+---

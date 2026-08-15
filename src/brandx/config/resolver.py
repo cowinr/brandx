@@ -142,7 +142,7 @@ class ResolvedConfig:
 
     Attributes are the resolved values after all four cascade layers are merged
     and derivations are applied. Access nested values via the .colours, .fonts,
-    .date, and .identity mapping attributes, or via helper properties.
+    .diagrams, .date, and .identity mapping attributes, or via helper properties.
     """
 
     __slots__ = (
@@ -156,6 +156,7 @@ class ResolvedConfig:
         "colours",
         "fonts",
         "date_format",
+        "diagrams",
     )
 
     def __init__(self, merged: dict) -> None:
@@ -171,6 +172,7 @@ class ResolvedConfig:
         colours = _block("colours")
         fonts = _block("fonts")
         date_block = _block("date")
+        diagrams = _block("diagrams")
 
         name: str = (identity.get("name") or "").strip()
         if not name:
@@ -199,6 +201,7 @@ class ResolvedConfig:
             "date_format",
             (date_block.get("format") or "long-british"),
         )
+        object.__setattr__(self, "diagrams", MappingProxyType(diagrams))
 
     def __setattr__(self, _name, _value):
         raise AttributeError("ResolvedConfig is immutable.")

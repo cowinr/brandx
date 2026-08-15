@@ -13,6 +13,9 @@ Responsibilities:
     - Strip syntax-highlighting spans from code blocks (email path = plain monospace).
     - Wrap code blocks in a single-cell table.
     - Embed local body images as base64 via assets.py.
+    - Substitute bx:mermaid markers with a sized, Outlook-safe base64 PNG <img>
+      in a single-cell table, or the escaped diagram source as a fallback code
+      block when rendering was unavailable.
     - Warn to stderr when total email size nears the Gmail clip threshold (80 KB).
     - Warn to stderr when the embedded avatar image is heavy (> 100 KB encoded).
 
@@ -38,13 +41,17 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import html as _html_lib
 import re
+import struct
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from brandx.config.resolver import ResolvedConfig
 from brandx.render.assets import embed_images, file_to_data_uri
+from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
 
 
@@ -236,6 +243,63 @@ def _build_code_table(pre_html: str, cfg: ResolvedConfig) -> str:
         f'</tr>'
         f'</table>'
     )
+
+
+# ---------------------------------------------------------------------------
+# Diagrams
+# ---------------------------------------------------------------------------
+
+def _diagram_img_builder(cfg: ResolvedConfig) -> Callable[[str, int], str]:
+    """Return a build_image callable for substitute(): a sized, Outlook-safe diagram <img>.
+
+    Outlook's Word engine ignores CSS max-width, so both the width/height
+    HTML attributes and the inline style are set from the PNG's own IHDR
+    header, clamped to diagrams.max_width and scaled back by diagrams.scale.
+    """
+    diagrams_cfg = dict(cfg.diagrams)
+    max_width = diagrams_cfg.get("max_width", 912)
+    scale = diagrams_cfg.get("scale", 2)
+
+    def build(png_base64: str, _index: int) -> str:
+        png_bytes = base64.b64decode(png_base64)
+        intrinsic_width, intrinsic_height = struct.unpack(">II", png_bytes[16:24])
+        width = intrinsic_width / scale
+        height = intrinsic_height / scale
+        if width > max_width:
+            ratio = max_width / width
+            width *= ratio
+            height *= ratio
+        width = round(width)
+        height = round(height)
+
+        img = (
+            f'<img src="data:image/png;base64,{png_base64}" alt="Diagram" '
+            f'width="{width}" height="{height}" '
+            f'style="width:{width}px;height:{height}px;'
+            f'max-width:100%;display:block;border:0;">'
+        )
+        return (
+            f'<table role="presentation" border="0" cellpadding="0" cellspacing="0"'
+            f' style="width:100%;border-collapse:collapse;margin:12px 0;">'
+            f'<tr><td style="padding:0;">{img}</td></tr>'
+            f'</table>'
+        )
+
+    return build
+
+
+def _diagram_fallback_builder(cfg: ResolvedConfig) -> Callable[[str], str]:
+    """Return a build_fallback callable for substitute(): the escaped mermaid source.
+
+    Reuses _build_code_table so a failed diagram gets the same spacing and
+    styling as any other code block on the email surface.
+    """
+
+    def build(source: str) -> str:
+        pre_html = f"<pre><code>{_html_lib.escape(source)}</code></pre>"
+        return _build_code_table(pre_html, cfg)
+
+    return build
 
 
 def _replace_bx_alerts(html: str, cfg: ResolvedConfig) -> str:
@@ -682,6 +746,14 @@ def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
     letterhead = _build_email_letterhead(cfg)
     title_block = _build_title_block(doc, cfg)
     body = _transform_body(doc.body_html, cfg, doc.source_dir)
+
+    # Diagrams: rendered after the existing body processing, since a rendered
+    # <img> or an escaped fallback code block needs no further transformation.
+    rendered_diagrams = render_diagrams(doc.diagrams, cfg, "png")
+    body = substitute(
+        body, rendered_diagrams, doc.diagrams, "png",
+        _diagram_img_builder(cfg), _diagram_fallback_builder(cfg),
+    )
 
     html = f"""\
 <!DOCTYPE html>

@@ -204,17 +204,56 @@ _DATE = {
 }
 
 # ---------------------------------------------------------------------------
+# Mermaid diagrams
+# ---------------------------------------------------------------------------
+
+_DIAGRAMS = {
+    "enabled": _key(
+        value=True,
+        comment="Whether fenced mermaid blocks are rendered as diagrams.",
+        purpose="Turns mermaid diagram rendering on or off across both surfaces.",
+    ),
+    "theme": _key(
+        value="brand",
+        comment=(
+            "Diagram theme. Accepted values: 'brand' (uses the palette below), "
+            "'default', 'forest', 'dark', 'neutral'."
+        ),
+        purpose="Selects the mermaid theme used to render diagrams.",
+    ),
+    "background": _key(
+        value="white",
+        comment=(
+            "Diagram canvas background colour. 'transparent' is accepted but "
+            "renders black in Outlook dark mode, so white is the safe default for email."
+        ),
+        purpose="Background colour passed to the mermaid renderer.",
+    ),
+    "scale": _key(
+        value=2,
+        comment="Puppeteer scale factor used for the email PNG. Ignored for the document SVG.",
+        purpose="Controls the resolution of the rendered email PNG.",
+    ),
+    "max_width": _key(
+        value=912,
+        comment="Maximum displayed width in px for a diagram in an email.",
+        purpose="Caps a diagram's displayed width so it fits the email content column.",
+    ),
+}
+
+# ---------------------------------------------------------------------------
 # Root DEFAULTS mapping
 # ---------------------------------------------------------------------------
-# Nested sub-mappings (colours, fonts, date, identity) keep the same dot-separated
-# override grammar as the flat keys. The resolver deep-merges nested dicts so that
-# a partial palette override leaves the rest intact.
+# Nested sub-mappings (colours, fonts, date, identity, diagrams) keep the same
+# dot-separated override grammar as the flat keys. The resolver deep-merges nested
+# dicts so that a partial palette override leaves the rest intact.
 
 DEFAULTS: dict = {
     "identity": _IDENTITY,
     "colours": _COLOURS,
     "fonts": _FONTS,
     "date": _DATE,
+    "diagrams": _DIAGRAMS,
 }
 
 
