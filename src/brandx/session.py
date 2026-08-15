@@ -19,6 +19,7 @@ from __future__ import annotations
 import cmd
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 DEST_PREVIEW = "preview"
 DEST_CLIPBOARD = "clipboard"
@@ -28,7 +29,7 @@ _PANEL_WIDTH = 54
 _RULE = "─" * _PANEL_WIDTH
 
 _COMMANDS_FOOTER = (
-    "  focus  output  brand  mark  dest  set  unset\n"
+    "  focus  output  brand  mark  letterhead  dest  set  unset\n"
     "  render  reset  status  help  quit"
 )
 
@@ -49,19 +50,22 @@ class SessionState:
     email: bool = False
     brand_path: str | None = None
     mark: str | None = None
+    letterhead: bool | None = None
     overrides: dict[str, str] = field(default_factory=dict)
     destination: str = DEST_PREVIEW
     dest_path: Path | None = None
 
-    def flags(self) -> dict[str, str]:
+    def flags(self) -> dict[str, Any]:
         """Build the dotted-flag dict the resolver consumes.
 
         Mirrors the one-shot path: the ``set`` overrides plus ``identity.mark``
-        when a mark override is active.
+        and ``identity.letterhead`` when those overrides are active.
         """
-        result = dict(self.overrides)
+        result: dict[str, Any] = dict(self.overrides)
         if self.mark is not None:
             result["identity.mark"] = self.mark
+        if self.letterhead is not None:
+            result["identity.letterhead"] = self.letterhead
         return result
 
 
@@ -70,7 +74,7 @@ class SessionState:
 # ---------------------------------------------------------------------------
 
 def _row(label: str, value: str, extra: str = "") -> str:
-    line = f"  {label.ljust(8)} {value.ljust(22)}"
+    line = f"  {label.ljust(10)} {value.ljust(22)}"
     if extra:
         line = f"{line} {extra}"
     return line.rstrip()
@@ -127,6 +131,11 @@ def render_panel(state: SessionState, cfg, brand_label: str) -> str:
         mark_value = "avatar → monogram (no avatar image set)"
         mark_extra = ""
 
+    # Same principle: the mark is inert while the letterhead is hidden, so say so
+    # rather than showing a selection that never reaches the page.
+    if not cfg.letterhead:
+        mark_extra = "(letterhead off)"
+
     if state.overrides:
         set_value = ", ".join(f"{k} = {v}" for k, v in state.overrides.items())
     else:
@@ -139,6 +148,7 @@ def render_panel(state: SessionState, cfg, brand_label: str) -> str:
         _row("output", "email" if state.email else "document"),
         _row("brand", brand_label),
         _row("mark", mark_value, mark_extra),
+        _row("letterhead", "on" if cfg.letterhead else "off"),
         _row("dest", dest_value, dest_extra),
         _row("set", set_value),
         _RULE,
@@ -232,6 +242,18 @@ class SessionCmd(cmd.Cmd):
         else:
             print("Usage: mark <monogram|avatar>")
 
+    def do_letterhead(self, arg):
+        "letterhead <on|off|default> — show or hide the letterhead banner."
+        choice = arg.strip().lower()
+        if choice in ("on", "yes", "true"):
+            self.state.letterhead = True
+        elif choice in ("off", "no", "false"):
+            self.state.letterhead = False
+        elif choice == "default":
+            self.state.letterhead = None
+        else:
+            print("Usage: letterhead <on|off|default>")
+
     def do_dest(self, arg):
         "dest <preview|clipboard|file <path>> — set the render destination."
         parts = arg.split()
@@ -269,7 +291,7 @@ class SessionCmd(cmd.Cmd):
             print(f"No override set for {key!r}.")
 
     def do_reset(self, arg):
-        "reset [output|brand|mark|dest|set]|all — reset one option, or all, to defaults."
+        "reset [output|brand|mark|letterhead|dest|set]|all — reset one option, or all, to defaults."
         target = arg.strip().lower()
         if target in ("", "all"):
             self.state = SessionState(focused_file=self.state.focused_file)
@@ -279,13 +301,15 @@ class SessionCmd(cmd.Cmd):
             self.state.brand_path = None
         elif target == "mark":
             self.state.mark = None
+        elif target == "letterhead":
+            self.state.letterhead = None
         elif target == "dest":
             self.state.destination = DEST_PREVIEW
             self.state.dest_path = None
         elif target == "set":
             self.state.overrides.clear()
         else:
-            print("Usage: reset [output|brand|mark|dest|set]|all")
+            print("Usage: reset [output|brand|mark|letterhead|dest|set]|all")
 
     # -- render -----------------------------------------------------------
 
@@ -305,6 +329,7 @@ class SessionCmd(cmd.Cmd):
                 email=self.state.email,
                 brand_path=self.state.brand_path,
                 mark=self.state.mark,
+                letterhead=self.state.letterhead,
                 set_flags=self.state.overrides,
             )
         except RenderInputError as exc:

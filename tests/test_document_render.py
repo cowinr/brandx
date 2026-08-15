@@ -47,6 +47,14 @@ def _make_cfg(**overrides) -> ResolvedConfig:
     )
 
 
+def _letterhead_cfg(**overrides) -> ResolvedConfig:
+    """Build a ResolvedConfig with the letterhead banner on (it is off by default)."""
+    overrides.setdefault("name", "Test User")
+    overrides.setdefault("role", "Test Role")
+    overrides["letterhead"] = True
+    return _make_cfg(**overrides)
+
+
 def _render(md: str, cfg: ResolvedConfig | None = None, source_dir: Path | None = None) -> str:
     if cfg is None:
         cfg = _make_cfg(name="Test User", role="Test Role")
@@ -133,7 +141,7 @@ class TestStyleBlock:
 class TestLetterhead:
     def test_name_in_letterhead(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith"}},
+            home_config={"identity": {"name": "Alice Smith", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -141,7 +149,7 @@ class TestLetterhead:
 
     def test_role_in_letterhead(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith", "role": "Senior Architect"}},
+            home_config={"identity": {"name": "Alice Smith", "role": "Senior Architect", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -150,20 +158,47 @@ class TestLetterhead:
 
     def test_empty_role_omits_letterhead_role_element(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith", "role": ""}},
+            home_config={"identity": {"name": "Alice Smith", "role": "", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
         assert 'class="letterhead-role"' not in html
 
     def test_gradient_bar_present(self):
-        html = _render("Hello.")
+        html = _render("Hello.", cfg=_letterhead_cfg())
         assert 'class="letterhead-bar"' in html
+
+    def test_omitted_by_default(self):
+        """The banner is opt-in: no letterhead markup with a default config."""
+        html = _render("Hello.", cfg=_make_cfg(name="Alice Smith", role="Architect"))
+        assert 'class="letterhead"' not in html
+        assert 'class="letterhead-bar"' not in html
+        assert 'class="letterhead-monogram"' not in html
+        assert 'class="letterhead-role"' not in html
+
+    def test_rendered_when_turned_on(self):
+        html = _render("Hello.", cfg=_letterhead_cfg(name="Alice Smith", role="Architect"))
+        assert 'class="letterhead"' in html
+        assert 'class="letterhead-bar"' in html
+        assert 'class="letterhead-monogram"' in html
+        assert 'class="letterhead-role"' in html
+
+    def test_body_still_renders_with_banner_off(self):
+        """Turning the banner off removes only the banner."""
+        html = _render(
+            "---\ntitle: My Report\n---\n\nHello.",
+            cfg=_make_cfg(name="Alice Smith"),
+        )
+        assert 'class="letterhead"' not in html
+        assert 'class="doc-title"' in html
+        assert "Hello." in html
+        # The footer is a separate block and is unaffected.
+        assert 'class="report-footer"' in html
 
     def test_monogram_rendered_by_default(self):
         """generic-engine AE2: default mark renders the monogram."""
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith"}},
+            home_config={"identity": {"name": "Alice Smith", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -177,6 +212,7 @@ class TestLetterhead:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Alice Smith",
                     "mark": "avatar",
                     "avatar": str(img),
@@ -193,6 +229,7 @@ class TestLetterhead:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Alice Smith",
                     "mark": "avatar",
                     "avatar": str(tmp_path / "ghost.png"),

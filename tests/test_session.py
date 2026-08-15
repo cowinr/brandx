@@ -240,3 +240,49 @@ def test_run_session_reports_missing_file(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(SessionCmd, "cmdloop", lambda self: None)
     assert run_session(tmp_path / "missing.md") == 0
     assert "File not found" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Letterhead banner option
+# ---------------------------------------------------------------------------
+
+def test_letterhead_absent_from_flags_until_set():
+    assert "identity.letterhead" not in SessionState().flags()
+
+
+def test_letterhead_flows_into_flags():
+    assert SessionState(letterhead=True).flags() == {"identity.letterhead": True}
+    assert SessionState(letterhead=False).flags() == {"identity.letterhead": False}
+
+
+def test_do_letterhead_sets_state():
+    session = SessionCmd(SessionState())
+    session.do_letterhead("on")
+    assert session.state.letterhead is True
+    session.do_letterhead("off")
+    assert session.state.letterhead is False
+    session.do_letterhead("default")
+    assert session.state.letterhead is None
+
+
+def test_do_letterhead_rejects_junk(capsys):
+    session = SessionCmd(SessionState(letterhead=True))
+    session.do_letterhead("maybe")
+    assert session.state.letterhead is True
+    assert "Usage: letterhead" in capsys.readouterr().out
+
+
+def test_reset_letterhead_clears_the_override():
+    session = SessionCmd(SessionState(letterhead=True))
+    session.do_reset("letterhead")
+    assert session.state.letterhead is None
+
+
+def test_panel_shows_letterhead_state():
+    off = render_panel(SessionState(), _cfg(), "defaults")
+    assert "letterhead" in off
+    assert "(letterhead off)" in off
+
+    on_cfg = _cfg(home_config={"identity": {"letterhead": True}})
+    on = render_panel(SessionState(letterhead=True), on_cfg, "defaults")
+    assert "(letterhead off)" not in on

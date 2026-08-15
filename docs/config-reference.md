@@ -58,6 +58,16 @@ Selects the letterhead mark. 'monogram' shows derived initials; 'avatar' shows t
 
 ---
 
+**`identity.letterhead`**
+
+Default: `false`
+
+Turns the letterhead banner on or off across both surfaces. When false the document or email opens straight at its title. Accepts a YAML boolean, or true/false/yes/no/on/off/1/0 from --set.
+
+*Config comment: Show the letterhead banner (mark, name, role, date). Off by default.*
+
+---
+
 ## `colours`
 
 **`colours.primary`**
@@ -288,7 +298,7 @@ Controls how the document/email date is rendered in the letterhead.
 
 **`diagrams.enabled`**
 
-Default: `True`
+Default: `true`
 
 Turns mermaid diagram rendering on or off across both surfaces.
 

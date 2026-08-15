@@ -2,8 +2,9 @@
 
 Responsibilities:
     - Emit 100% inline styles with a table-based layout and no <style> block.
-    - Compose the letterhead (monogram or embedded avatar, name, role) with a
-      teal bottom-border row. No date line and no footer (differs from document).
+    - Compose the letterhead banner (monogram or embedded avatar, name, role) with
+      a teal bottom-border row, when identity.letterhead is on. It is off by
+      default. No date line and no footer (differs from document).
     - Transform the structural body HTML from the pipeline:
         - bx:alert markers → two-cell bar+content tables (Outlook-safe callouts).
         - bx:blockquote markers → two-cell accent-bar+grey tables.
@@ -743,7 +744,7 @@ def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
     text = colours.get("text", "#1f2933")
     family = cfg.fonts.get("font_email", "'Inter','Segoe UI',Arial,Helvetica,sans-serif")
 
-    letterhead = _build_email_letterhead(cfg)
+    letterhead = _build_email_letterhead(cfg) if cfg.letterhead else ""
     title_block = _build_title_block(doc, cfg)
     body = _transform_body(doc.body_html, cfg, doc.source_dir)
 

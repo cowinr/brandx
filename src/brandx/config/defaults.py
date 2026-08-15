@@ -60,6 +60,15 @@ _IDENTITY = {
         comment="Identity mark style: 'monogram' (default) or 'avatar'.",
         purpose="Selects the letterhead mark. 'monogram' shows derived initials; 'avatar' shows the image.",
     ),
+    "letterhead": _key(
+        value=False,
+        comment="Show the letterhead banner (mark, name, role, date). Off by default.",
+        purpose=(
+            "Turns the letterhead banner on or off across both surfaces. When false the "
+            "document or email opens straight at its title. Accepts a YAML boolean, or "
+            "true/false/yes/no/on/off/1/0 from --set."
+        ),
+    ),
 }
 
 # ---------------------------------------------------------------------------

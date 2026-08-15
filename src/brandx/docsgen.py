@@ -21,9 +21,15 @@ from brandx.config.defaults import DEFAULTS
 # ---------------------------------------------------------------------------
 
 def _format_value(value) -> str:
-    """Format a default value for display in the reference table."""
+    """Format a default value for display in the reference table.
+
+    Booleans are shown in YAML form (``true``/``false``), not Python's repr, so
+    the reference can be copied straight into a brand config.
+    """
     if value is None:
         return "*(empty)*"
+    if isinstance(value, bool):
+        return f"`{str(value).lower()}`"
     return f"`{value}`"
 
 

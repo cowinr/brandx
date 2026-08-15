@@ -48,7 +48,7 @@ def _discover_brand_configs() -> list[tuple[str, str | None]]:
 
 
 def _opt_row(label: str, value: str, key: str) -> str:
-    left = f"  {label.ljust(7)} {value}"
+    left = f"  {label.ljust(10)} {value}"
     return f"{left.ljust(_WIDTH - 3)}{key}"
 
 
@@ -89,6 +89,7 @@ class TuiSession:
             _RULE,
             _opt_row("output", f"‹ {'email' if self.state.email else 'document'} ›", "o"),
             _opt_row("mark", mark, "m"),
+            _opt_row("letterhead", "‹ on ›" if cfg.letterhead else "‹ off ›", "l"),
             _opt_row("brand", brand_short, "b"),
             _opt_row("dest", dest, "d"),
             _opt_row("set", overrides, "s"),
@@ -116,6 +117,12 @@ class TuiSession:
         elif lower == "m":
             self.state.mark = "monogram" if self.state.mark == "avatar" else "avatar"
             self.status = f"mark: {self.state.mark}"
+        elif lower == "l":
+            # Flip against the resolved value, not the raw state, so the toggle
+            # always changes what the next render produces.
+            cfg, _label = resolve_for_state(self.state)
+            self.state.letterhead = not cfg.letterhead
+            self.status = f"letterhead: {'on' if self.state.letterhead else 'off'}"
         elif lower == "b":
             self._cycle_brand()
         elif lower == "d":
@@ -130,7 +137,7 @@ class TuiSession:
         elif lower == "r":
             self._render()
         else:
-            self.status = "keys: o m b d s  ·  r f x q"
+            self.status = "keys: o m l b d s  ·  r f x q"
         return False
 
     def _cycle_brand(self) -> None:
@@ -196,6 +203,7 @@ class TuiSession:
                 email=self.state.email,
                 brand_path=self.state.brand_path,
                 mark=self.state.mark,
+                letterhead=self.state.letterhead,
                 set_flags=self.state.overrides,
             )
         except RenderInputError as exc:

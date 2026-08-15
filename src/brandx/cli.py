@@ -15,7 +15,7 @@ Usage:
     brandx init [--force]
     brandx render <file.md> [--email] [-o OUTPUT] [--open] [--preview]
                             [--clipboard] [--brand PATH] [--mark monogram|avatar]
-                            [--set KEY=VALUE ...]
+                            [--letterhead | --no-letterhead] [--set KEY=VALUE ...]
 
 Destination precedence for render (pick exactly one):
     --clipboard          Copy rich text to the macOS clipboard.
@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -37,7 +38,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="brandx",
         description="Render markdown to a branded document or Outlook-safe email.",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 1.1.0")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.2.0")
 
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
@@ -101,6 +102,21 @@ def _add_render_subcommand(subparsers):
         default=None,
         help="Identity mark style (overrides config).",
     )
+    letterhead_group = sub.add_mutually_exclusive_group()
+    letterhead_group.add_argument(
+        "--letterhead",
+        dest="letterhead",
+        action="store_true",
+        default=None,
+        help="Show the letterhead banner (mark, name, role, date). Off by default.",
+    )
+    letterhead_group.add_argument(
+        "--no-letterhead",
+        dest="letterhead",
+        action="store_false",
+        default=None,
+        help="Hide the letterhead banner, overriding a config that turns it on.",
+    )
     sub.add_argument(
         "--set",
         metavar="KEY=VALUE",
@@ -130,6 +146,7 @@ def build_html(
     email: bool = False,
     brand_path: str | None = None,
     mark: str | None = None,
+    letterhead: bool | None = None,
     set_flags: dict[str, str] | None = None,
 ):
     """Load config, parse the document, resolve the cascade, and render.
@@ -143,6 +160,8 @@ def build_html(
         email: Render the Outlook-safe email surface instead of a document.
         brand_path: Optional explicit brand config path.
         mark: Optional identity mark override ('monogram' or 'avatar').
+        letterhead: Optional letterhead banner override. None leaves the cascade
+            to decide; True or False wins over the config.
         set_flags: Already-validated dotted-key overrides.
 
     Returns:
@@ -170,9 +189,11 @@ def build_html(
 
     doc = parse_document(input_path)
 
-    flags: dict[str, str] = dict(set_flags or {})
+    flags: dict[str, Any] = dict(set_flags or {})
     if mark is not None:
         flags["identity.mark"] = mark
+    if letterhead is not None:
+        flags["identity.letterhead"] = letterhead
 
     # Resolve the cascade. Document metadata in the frontmatter (title, date, and
     # similar) is harmless: the resolver ignores unknown top-level keys and a
@@ -205,6 +226,7 @@ def _cmd_render(args) -> int:
             email=args.email,
             brand_path=args.brand,
             mark=args.mark,
+            letterhead=args.letterhead,
             set_flags=set_flags,
         )
     except RenderInputError as exc:

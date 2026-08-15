@@ -76,7 +76,7 @@ def test_version():
         text=True,
     )
     assert result.returncode == 0
-    assert "1.1.0" in result.stdout
+    assert "1.2.0" in result.stdout
 
 
 def test_no_subcommand_launches_session_and_exits_zero():
@@ -359,3 +359,80 @@ def test_version_flag_does_not_launch_session(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
     assert exc.value.code == 0
+
+
+# ---------------------------------------------------------------------------
+# Letterhead banner flags
+# ---------------------------------------------------------------------------
+
+def test_render_omits_letterhead_by_default(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md)])
+    assert exc.value.code == 0
+    assert 'class="letterhead"' not in capsys.readouterr().out
+
+
+def test_render_letterhead_flag_turns_it_on(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--letterhead"])
+    assert exc.value.code == 0
+    assert 'class="letterhead"' in capsys.readouterr().out
+
+
+def test_render_no_letterhead_beats_a_config_that_turns_it_on(tmp_path, capsys):
+    """The flag layer is highest, so --no-letterhead wins over the YAML."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    brand_yaml = tmp_path / "brand.yaml"
+    brand_yaml.write_text("identity:\n  letterhead: true\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--brand", str(brand_yaml)])
+    assert exc.value.code == 0
+    assert 'class="letterhead"' in capsys.readouterr().out
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--brand", str(brand_yaml), "--no-letterhead"])
+    assert exc.value.code == 0
+    assert 'class="letterhead"' not in capsys.readouterr().out
+
+
+def test_render_letterhead_flags_are_mutually_exclusive(tmp_path):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--letterhead", "--no-letterhead"])
+    assert exc.value.code != 0
+
+
+def test_render_set_flag_string_false_does_not_read_as_truthy(tmp_path, capsys):
+    """`--set identity.letterhead=false` passes the string "false", not a bool."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    brand_yaml = tmp_path / "brand.yaml"
+    brand_yaml.write_text("identity:\n  letterhead: true\n", encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        main([
+            "render", str(md), "--brand", str(brand_yaml),
+            "--set", "identity.letterhead=false",
+        ])
+    assert exc.value.code == 0
+    assert 'class="letterhead"' not in capsys.readouterr().out
+
+
+def test_render_email_letterhead_flag(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--email"])
+    assert exc.value.code == 0
+    assert "border-bottom:2px solid" not in capsys.readouterr().out
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--email", "--letterhead"])
+    assert exc.value.code == 0
+    assert "border-bottom:2px solid" in capsys.readouterr().out

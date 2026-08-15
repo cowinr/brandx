@@ -66,6 +66,7 @@ Open `~/.config/brandx/brand.yaml` and fill in your details:
 identity:
   name: Alex Renwick     # your full name
   role: Senior Analyst   # shown in the letterhead beneath your name
+  letterhead: true       # show the letterhead banner (off by default)
 
 colours:
   primary: '#1c2b39'     # primary heading colour
@@ -120,7 +121,7 @@ brandx resolves brand values from four layers, lowest to highest:
 1. **Application defaults** — a value for every key, so output is always sane with no config at all.
 2. **Home config** (`~/.config/brandx/brand.yaml`) — your personal brand.
 3. **Document frontmatter** — per-document overrides in the markdown YAML header.
-4. **Invocation flags** (`--set KEY=VALUE`, `--mark`) — one-off overrides at render time.
+4. **Invocation flags** (`--set KEY=VALUE`, `--mark`, `--letterhead`/`--no-letterhead`) — one-off overrides at render time.
 
 The same key name at a higher layer wins. Nested blocks (such as `colours`) are deep-merged, so setting one colour key leaves the rest of the palette intact.
 
@@ -138,9 +139,9 @@ There is no `docsgen` subcommand and nothing runs this for you, so the reference
 
 ## Output surfaces
 
-**Document** — a branded HTML page with a web font (`<link>`), a `<style>` block with CSS variables built from your palette, syntax-highlighted fenced code blocks, embedded diagrams (see [Diagrams](#diagrams)), a print stylesheet, and a letterhead with your mark (monogram or avatar).
+**Document** — a branded HTML page with a web font (`<link>`), a `<style>` block with CSS variables built from your palette, syntax-highlighted fenced code blocks, embedded diagrams (see [Diagrams](#diagrams)), a print stylesheet, and an optional letterhead banner (see [The letterhead banner](#the-letterhead-banner)).
 
-**Email** — 100% inline styles, presentation-table layout, Outlook-safe callout bars, plain monospace code (no syntax highlighting; email clients strip class-based styles), embedded diagrams (see [Diagrams](#diagrams)), web-safe font stack, and base64-embedded avatar. Prints a warning when total size approaches the Gmail clip threshold.
+**Email** — 100% inline styles, presentation-table layout, Outlook-safe callout bars, plain monospace code (no syntax highlighting; email clients strip class-based styles), embedded diagrams (see [Diagrams](#diagrams)), web-safe font stack, and an optional letterhead banner with a base64-embedded avatar. Prints a warning when total size approaches the Gmail clip threshold.
 
 ## Diagrams
 
@@ -192,9 +193,38 @@ Set `theme: default` (or `forest`, `dark`, `neutral`) to opt out of brand colour
 
 Rendered diagrams are cached under `~/.cache/brandx/diagrams/`, keyed by content, so an unchanged diagram costs nothing on a re-render.
 
+## The letterhead banner
+
+The letterhead is the identity banner at the top of the output: a gradient bar, your mark (monogram or avatar), your name, your role, and the date. The document surface shows the date; the email surface does not.
+
+It is **off by default**, so a plain render opens straight at the document title. Turn it on for one render:
+
+```bash
+brandx render note.md --letterhead
+```
+
+Or turn it on for every render by putting it in `~/.config/brandx/brand.yaml`:
+
+```yaml
+identity:
+  letterhead: true
+```
+
+With that set, `--no-letterhead` drops it again for a single render. Per-document frontmatter works too:
+
+```markdown
+---
+title: Board Paper
+identity:
+  letterhead: true
+---
+```
+
+The document footer (your name and the date) is a separate block and is not affected by this toggle.
+
 ## Selecting the identity mark
 
-The letterhead mark defaults to a two-letter monogram derived from your name. Pass `--mark avatar` (or set `identity.mark: avatar` in the config) to use an image instead:
+The letterhead mark defaults to a two-letter monogram derived from your name. It only appears when the letterhead banner is on. Pass `--mark avatar` (or set `identity.mark: avatar` in the config) to use an image instead:
 
 ```bash
 brandx render examples/sample-note.md --mark avatar
@@ -218,14 +248,15 @@ Running `brandx` with no subcommand (optionally `brandx <file.md>`) drops into a
 $ brandx note.md
 brandx · interactive session
 ──────────────────────────────────────────────────────
-  file     note.md
-  output   document
-  brand    ~/.config/brandx/brand.yaml
-  mark     monogram               Alex Renwick
-  dest     preview
-  set      (none)
+  file       note.md
+  output     document
+  brand      ~/.config/brandx/brand.yaml
+  mark       monogram               (letterhead off)
+  letterhead off
+  dest       preview
+  set        (none)
 ──────────────────────────────────────────────────────
-  focus  output  brand  mark  dest  set  unset
+  focus  output  brand  mark  letterhead  dest  set  unset
   render  reset  status  help  quit
 brandx>
 ```
@@ -238,6 +269,7 @@ The panel reprints after every command and shows the resolved settings, so what 
 | `output` | `document` \| `email` | Choose the output form. |
 | `brand` | `<path>` \| `default` | Use an alternate brand config, or return to the default. |
 | `mark` | `monogram` \| `avatar` | Choose the identity mark style. |
+| `letterhead` | `on` \| `off` \| `default` | Show or hide the letterhead banner. `default` returns to the config. |
 | `dest` | `preview` \| `clipboard` \| `file <path>` | Set the render destination. |
 | `set` | `<key=value>` | Add a config override (e.g. `set colours.accent=#e63946`). |
 | `unset` | `<key>` | Remove one override. |

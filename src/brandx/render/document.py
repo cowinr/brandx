@@ -2,7 +2,8 @@
 
 Responsibilities:
     - Build a <style> block with :root CSS variables sourced from the resolved config.
-    - Compose the letterhead (gradient bar, identity mark, name, role, date).
+    - Compose the letterhead banner (gradient bar, identity mark, name, role,
+      date) when identity.letterhead is on. It is off by default.
     - Render the document title block (doc-title, doc-subtitle).
     - Transform the structural body HTML from the pipeline:
         - bx:alert markers → .alert .alert-{type} blocks with labelled .alert-title.
@@ -665,7 +666,7 @@ def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
     rendered_diagrams = render_diagrams(doc.diagrams, cfg, "svg")
     body = substitute(body, rendered_diagrams, doc.diagrams, "svg", _diagram_img, _diagram_fallback)
 
-    letterhead = _build_letterhead(cfg, date_str)
+    letterhead = _build_letterhead(cfg, date_str) if cfg.letterhead else ""
 
     page_title = doc.title or cfg.name or "Document"
 

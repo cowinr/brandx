@@ -159,3 +159,19 @@ def test_key_completer_matches_config_keys():
 
 def test_key_completer_stops_after_equals():
     assert _key_completer("colours.accent=", 0) is None
+
+
+def test_dispatch_l_toggles_letterhead():
+    tui = TuiSession(SessionState())
+    tui.dispatch("l", _ask_none)
+    assert tui.state.letterhead is True
+    tui.dispatch("l", _ask_none)
+    assert tui.state.letterhead is False
+
+
+def test_screen_shows_letterhead_row():
+    tui = TuiSession(SessionState())
+    assert "letterhead" in tui.render_screen()
+    assert "‹ off ›" in tui.render_screen()
+    tui.dispatch("l", _ask_none)
+    assert "‹ on ›" in tui.render_screen()

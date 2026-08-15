@@ -11,6 +11,7 @@ After merging, the resolver derives:
     - the name from the OS account when unset at every layer
     - a graceful fallback when the OS exposes only a username (title-cased; initials derived)
     - email avatar falls back to the main avatar when absent
+    - the letterhead toggle is coerced to a real bool (--set yields strings)
 
 Returns an immutable (frozen) ResolvedConfig object threaded through the renderers.
 No module-global brand state.
@@ -78,6 +79,34 @@ def _apply_dotted_flags(config: dict, flags: dict[str, Any]) -> dict:
             continue
         node[parts[-1]] = value
     return result
+
+
+# ---------------------------------------------------------------------------
+# Boolean coercion
+# ---------------------------------------------------------------------------
+
+_TRUE_STRINGS = frozenset({"true", "yes", "on", "1"})
+_FALSE_STRINGS = frozenset({"false", "no", "off", "0"})
+
+
+def _as_bool(value: Any, default: bool) -> bool:
+    """Coerce a config value to a bool, tolerating the strings --set produces.
+
+    `--set identity.letterhead=false` arrives as the string "false", which is
+    truthy, so a bare truth test would silently invert the user's intent.
+    """
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in _TRUE_STRINGS:
+            return True
+        if token in _FALSE_STRINGS:
+            return False
+        return default
+    return bool(value)
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +182,7 @@ class ResolvedConfig:
         "mark",
         "avatar",
         "avatar_email",
+        "letterhead",
         "colours",
         "fonts",
         "date_format",
@@ -193,6 +223,10 @@ class ResolvedConfig:
         else:
             # Fall back to the main avatar
             object.__setattr__(self, "avatar_email", object.__getattribute__(self, "avatar"))
+
+        object.__setattr__(
+            self, "letterhead", _as_bool(identity.get("letterhead"), default=False)
+        )
 
         object.__setattr__(self, "colours", MappingProxyType(colours))
         object.__setattr__(self, "fonts", MappingProxyType(fonts))

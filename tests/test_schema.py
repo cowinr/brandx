@@ -121,3 +121,12 @@ class TestSchemaValidation:
         validate_config({"bad_key": 1}, source_label="my-config.yaml")
         captured = capsys.readouterr()
         assert "my-config.yaml" in captured.err
+
+
+def test_letterhead_is_a_known_path():
+    assert "identity.letterhead" in known_paths()
+
+
+def test_letterhead_in_config_produces_no_unknown_key_warning(capsys):
+    validate_config({"identity": {"letterhead": True}}, source_label="test.yaml")
+    assert "unknown brand key" not in capsys.readouterr().err

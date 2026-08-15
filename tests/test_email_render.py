@@ -46,6 +46,14 @@ def _make_cfg(**overrides) -> ResolvedConfig:
     )
 
 
+def _letterhead_cfg(**overrides) -> ResolvedConfig:
+    """Build a ResolvedConfig with the letterhead banner on (it is off by default)."""
+    overrides.setdefault("name", "Test User")
+    overrides.setdefault("role", "Test Role")
+    overrides["letterhead"] = True
+    return _make_cfg(**overrides)
+
+
 def _render(md: str, cfg: ResolvedConfig | None = None, source_dir: Path | None = None) -> str:
     if cfg is None:
         cfg = _make_cfg(name="Test User", role="Test Role")
@@ -175,7 +183,14 @@ class TestGoldenSnapshot:
         _GOLDEN_HTML by running the renderer on _GOLDEN_MD with the fixed config.
         """
         cfg = resolve(
-            home_config={"identity": {"name": "Test User", "role": "Test Role"}},
+            home_config={
+                "identity": {
+                    "name": "Test User",
+                    "role": "Test Role",
+                    # On, so the snapshot keeps guarding the letterhead markup.
+                    "letterhead": True,
+                }
+            },
             os_name_fn=lambda: "Test User",
         )
         doc = parse_text(_GOLDEN_MD, source_dir=Path("."))
@@ -277,7 +292,7 @@ class TestInlineStyles:
         assert re.search(r'<p\s+style="[^"]+">A paragraph\.</p>', html)
 
     def test_letterhead_td_has_inline_style(self):
-        html = _render("Hello.")
+        html = _render("Hello.", cfg=_letterhead_cfg())
         # Letterhead cell should carry border-bottom style.
         assert "border-bottom:2px solid" in html
 
@@ -292,7 +307,7 @@ class TestPresentationTables:
         assert 'role="presentation"' in html
 
     def test_multiple_presentation_tables(self):
-        html = _render("Hello.")
+        html = _render("Hello.", cfg=_letterhead_cfg())
         count = html.count('role="presentation"')
         # Outer table + inner content table + letterhead tables ≥ 3
         assert count >= 3
@@ -305,7 +320,7 @@ class TestPresentationTables:
 class TestLetterhead:
     def test_name_in_letterhead(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith"}},
+            home_config={"identity": {"name": "Alice Smith", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -313,7 +328,7 @@ class TestLetterhead:
 
     def test_role_in_letterhead(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith", "role": "Senior Architect"}},
+            home_config={"identity": {"name": "Alice Smith", "role": "Senior Architect", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -321,7 +336,7 @@ class TestLetterhead:
 
     def test_empty_role_omits_role_div(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith", "role": ""}},
+            home_config={"identity": {"name": "Alice Smith", "role": "", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -331,7 +346,7 @@ class TestLetterhead:
 
     def test_monogram_in_letterhead_by_default(self):
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith"}},
+            home_config={"identity": {"name": "Alice Smith", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         html = _render("Hello.", cfg=cfg)
@@ -340,7 +355,7 @@ class TestLetterhead:
     def test_no_date_in_email_letterhead(self):
         """The email letterhead has no date line (differs from document)."""
         cfg = resolve(
-            home_config={"identity": {"name": "Alice Smith"}},
+            home_config={"identity": {"name": "Alice Smith", "letterhead": True}},
             os_name_fn=lambda: "X",
         )
         doc = parse_text("---\ndate: 2026-04-08\n---\nHello.", source_dir=Path("."))
@@ -356,9 +371,40 @@ class TestLetterhead:
 
     def test_teal_bottom_border_on_letterhead(self):
         """The letterhead bottom border uses the secondary (teal) colour."""
-        html = _render("Hello.")
+        html = _render("Hello.", cfg=_letterhead_cfg())
         # Default secondary is #0d8a7d
         assert "border-bottom:2px solid #0d8a7d" in html
+
+    def test_omitted_by_default(self):
+        """The banner is opt-in: no letterhead markup with a default config.
+
+        The markdown carries a title so the <title> tag does not fall back to
+        cfg.name, which would put the name in the head rather than the banner.
+        """
+        html = _render(
+            "---\ntitle: Sample\n---\n\nHello.",
+            cfg=_make_cfg(name="Alice Smith", role="Architect"),
+        )
+        assert "border-bottom:2px solid" not in html
+        assert "Alice Smith" not in html
+        assert "Architect" not in html
+
+    def test_rendered_when_turned_on(self):
+        html = _render("Hello.", cfg=_letterhead_cfg(name="Alice Smith", role="Architect"))
+        assert "border-bottom:2px solid #0d8a7d" in html
+        assert "Alice Smith" in html
+        assert "Architect" in html
+
+    def test_body_still_renders_with_banner_off(self):
+        """Turning the banner off removes only the banner."""
+        html = _render(
+            "---\ntitle: Sample\n---\n\nHello.",
+            cfg=_make_cfg(name="Alice Smith"),
+        )
+        assert "border-bottom:2px solid" not in html
+        assert "Sample" in html
+        assert "Hello." in html
+        assert 'role="presentation"' in html
 
     def test_avatar_embedded_when_mark_is_avatar(self, tmp_path):
         """mark=avatar with a readable file embeds the image as data: URI."""
@@ -367,6 +413,7 @@ class TestLetterhead:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Alice Smith",
                     "mark": "avatar",
                     "avatar": str(img),
@@ -381,6 +428,7 @@ class TestLetterhead:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Alice Smith",
                     "mark": "avatar",
                     "avatar": str(tmp_path / "ghost.png"),
@@ -403,6 +451,7 @@ class TestLetterhead:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Alice",
                     "mark": "avatar",
                     "avatar": str(main_img),
@@ -651,6 +700,7 @@ class TestSizeWarnings:
         cfg = resolve(
             home_config={
                 "identity": {
+                    "letterhead": True,
                     "name": "Test",
                     "mark": "avatar",
                     "avatar": str(big_img),

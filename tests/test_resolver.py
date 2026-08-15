@@ -198,3 +198,54 @@ class TestResolve:
         # Defaults still apply; resolution completes.
         assert cfg.colours["primary"] == "#1c2b39"
         assert cfg.name  # a name was still derived
+
+
+# ---------------------------------------------------------------------------
+# Letterhead toggle
+# ---------------------------------------------------------------------------
+
+class TestLetterheadToggle:
+    """The letterhead banner is opt-in: off unless a layer turns it on."""
+
+    def test_off_by_default(self):
+        assert resolve().letterhead is False
+
+    def test_home_config_turns_it_on(self):
+        cfg = resolve(home_config={"identity": {"letterhead": True}})
+        assert cfg.letterhead is True
+
+    def test_frontmatter_overrides_home_config(self):
+        cfg = resolve(
+            home_config={"identity": {"letterhead": True}},
+            frontmatter={"identity": {"letterhead": False}},
+        )
+        assert cfg.letterhead is False
+
+    def test_flag_overrides_frontmatter(self):
+        cfg = resolve(
+            frontmatter={"identity": {"letterhead": False}},
+            flags={"identity.letterhead": True},
+        )
+        assert cfg.letterhead is True
+
+    @pytest.mark.parametrize(
+        "token,expected",
+        [
+            ("true", True), ("True", True), ("yes", True), ("on", True), ("1", True),
+            ("false", False), ("False", False), ("no", False), ("off", False), ("0", False),
+            (" TRUE ", True), (" off ", False),
+        ],
+    )
+    def test_set_flag_strings_are_coerced(self, token, expected):
+        """--set yields strings, so "false" must not read as truthy."""
+        cfg = resolve(flags={"identity.letterhead": token})
+        assert cfg.letterhead is expected
+
+    def test_unparseable_string_falls_back_to_default(self):
+        cfg = resolve(flags={"identity.letterhead": "maybe"})
+        assert cfg.letterhead is False
+
+    def test_scalar_identity_block_does_not_crash(self):
+        """A scalar where the identity block belongs leaves the toggle at its default."""
+        cfg = resolve(frontmatter={"identity": 42})
+        assert cfg.letterhead is False

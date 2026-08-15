@@ -32,6 +32,8 @@ Install for use: `uv tool install git+https://github.com/cowinr/brandx`.
 - **Identity is data, never code.** No person-specific values in the engine; everything visual comes from the resolved config.
 - **Reproduce ea-brand technique, not code.** `~/projects/ea-brand` is the pattern source for the hard parts (Outlook primitives, base64 embedding, dependency-free highlighting); reproduce the technique, do not fork.
 - **Outlook fidelity cannot be tested in automation.** The email golden-HTML snapshot guards structural drift only; true fidelity needs a manual paste-into-Outlook check when the email surface changes.
+- **The letterhead banner is opt-in** (`identity.letterhead`, default false). Its absence from a default render is the design, not a bug. Tests that need it turn it on through `_letterhead_cfg()`.
+- **A `--set` value is always a string.** A boolean config key must be coerced through `resolver._as_bool`, or `--set key=false` reads as truthy and silently inverts the user's intent.
 - `ResolvedConfig` is immutable. Do not mutate it after resolution.
 
 ## Boundaries
