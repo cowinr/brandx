@@ -40,6 +40,7 @@ def _run_osascript(script: str) -> bool:
     result = subprocess.run(
         ["osascript", "-e", script],
         capture_output=True,
+        check=False,
     )
     return result.returncode == 0
 

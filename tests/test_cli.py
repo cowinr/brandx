@@ -29,10 +29,9 @@ from pathlib import Path
 
 import pytest
 
-import brandx.output as _output_mod
 import brandx.clipboard as _clipboard_mod
+import brandx.output as _output_mod
 from brandx.cli import main
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -58,6 +57,7 @@ def test_help_lists_subcommands():
         [sys.executable, "-m", "brandx.cli", "--help"],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 0
     assert "init" in result.stdout
@@ -65,7 +65,7 @@ def test_help_lists_subcommands():
 
 
 def test_import_without_error():
-    import brandx.cli as cli  # noqa: F401
+    from brandx import cli
     assert hasattr(cli, "main")
 
 
@@ -74,9 +74,10 @@ def test_version():
         [sys.executable, "-m", "brandx.cli", "--version"],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 0
-    assert "1.2.0" in result.stdout
+    assert "1.2.1" in result.stdout
 
 
 def test_no_subcommand_launches_session_and_exits_zero():
@@ -86,6 +87,7 @@ def test_no_subcommand_launches_session_and_exits_zero():
         capture_output=True,
         text=True,
         input="",
+        check=False,
     )
     assert result.returncode == 0
     assert "interactive session" in result.stdout
@@ -96,6 +98,7 @@ def test_init_force_writes_config():
         [sys.executable, "-m", "brandx.cli", "init", "--force"],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 0
     assert "Written:" in result.stderr

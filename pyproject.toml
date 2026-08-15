@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "brandx"
-version = "1.2.0"
+version = "1.2.1"
 description = "Generic identity-free markdown-to-branded-document tool driven by a YAML brand config."
 readme = "README.md"
 license = {text = "MIT"}
@@ -17,6 +17,16 @@ dependencies = [
 
 [project.scripts]
 brandx = "brandx.cli:main"
+
+# Declared so `uv sync` installs the toolchain rather than pruning it, and so
+# `uv run ruff check` is deterministic. Ruff is bounded to one minor: 0.16
+# widened the default rule set, which turned a clean repo into 47 findings with
+# no code change.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.16,<0.17",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/brandx"]

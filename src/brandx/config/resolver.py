@@ -33,7 +33,6 @@ from typing import Any
 
 from brandx.config.defaults import nested_defaults
 
-
 # ---------------------------------------------------------------------------
 # Deep merge
 # ---------------------------------------------------------------------------
@@ -82,19 +81,20 @@ def _apply_dotted_flags(config: dict, flags: dict[str, Any]) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Boolean coercion
+# Scalar coercion
 # ---------------------------------------------------------------------------
+#
+# Every value from `--set KEY=VALUE` is a string. A typed key must therefore be
+# coerced before the renderers use it, or "false" reads as truthy and "2" fails
+# arithmetic. Both helpers fall back to the default rather than raising, so a
+# malformed override degrades to shipped behaviour instead of killing a render.
 
 _TRUE_STRINGS = frozenset({"true", "yes", "on", "1"})
 _FALSE_STRINGS = frozenset({"false", "no", "off", "0"})
 
 
 def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce a config value to a bool, tolerating the strings --set produces.
-
-    `--set identity.letterhead=false` arrives as the string "false", which is
-    truthy, so a bare truth test would silently invert the user's intent.
-    """
+    """Coerce a config value to a bool, tolerating the strings --set produces."""
     if isinstance(value, bool):
         return value
     if value is None:
@@ -107,6 +107,29 @@ def _as_bool(value: Any, default: bool) -> bool:
             return False
         return default
     return bool(value)
+
+
+def _as_number(value: Any, default: float) -> float:
+    """Coerce a config value to a number, tolerating the strings --set produces.
+
+    An int stays an int. Anything unparseable returns the default, so a typo in
+    `--set diagrams.scale=x` cannot raise a TypeError deep inside a renderer.
+    """
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        token = value.strip()
+        try:
+            return int(token)
+        except ValueError:
+            pass
+        try:
+            return float(token)
+        except ValueError:
+            return default
+    return default
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +152,7 @@ def _resolve_os_name() -> str:
             if gecos:
                 return gecos
             username = entry.pw_name
-        except Exception:
+        except Exception:  # noqa: BLE001 - a display name must never fail a render
             username = os.environ.get("USER", os.environ.get("LOGNAME", "user"))
     else:
         username = os.environ.get("USERNAME", "user")
@@ -174,7 +197,9 @@ class ResolvedConfig:
     .diagrams, .date, and .identity mapping attributes, or via helper properties.
     """
 
-    __slots__ = (
+    # Ordered by config block, not alphabetically: the identity fields read as a
+    # group, then the nested blocks.
+    __slots__ = (  # noqa: RUF023
         "_data",
         "name",
         "role",
@@ -235,6 +260,13 @@ class ResolvedConfig:
             "date_format",
             (date_block.get("format") or "long-british"),
         )
+
+        # The diagrams block is the only one with typed values, so coerce here
+        # rather than at each read site in the two renderers.
+        diagrams = dict(diagrams)
+        diagrams["enabled"] = _as_bool(diagrams.get("enabled"), default=True)
+        diagrams["scale"] = _as_number(diagrams.get("scale"), default=2)
+        diagrams["max_width"] = _as_number(diagrams.get("max_width"), default=912)
         object.__setattr__(self, "diagrams", MappingProxyType(diagrams))
 
     def __setattr__(self, _name, _value):
@@ -274,13 +306,15 @@ def resolve(
         merged = _apply_dotted_flags(merged, flags)
 
     if os_name_fn is not None:
-        import brandx.config.resolver as _self_mod
-        original = _self_mod._resolve_os_name
-        _self_mod._resolve_os_name = os_name_fn
+        # ResolvedConfig calls the module-level _resolve_os_name, so the test seam
+        # has to rebind that global rather than pass an argument down.
+        module = sys.modules[__name__]
+        original = module._resolve_os_name
+        module._resolve_os_name = os_name_fn
         try:
             cfg = ResolvedConfig(merged)
         finally:
-            _self_mod._resolve_os_name = original
+            module._resolve_os_name = original
         return cfg
 
     return ResolvedConfig(merged)

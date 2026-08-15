@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-import brandx.render.diagrams as diagrams
 from brandx.config.resolver import resolve
+from brandx.render import diagrams
 from brandx.render.diagrams import (
     _mermaid_config,
     extract_diagrams,
@@ -34,7 +34,6 @@ from brandx.render.diagrams import (
 from brandx.render.document import _fix_svg_root, render_document
 from brandx.render.email import render_email
 from brandx.render.pipeline import parse_text
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

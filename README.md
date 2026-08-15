@@ -112,7 +112,11 @@ Use `--set KEY=VALUE` with dotted notation. The flag sits at the top of the casc
 brandx render examples/sample-note.md --set colours.accent=#e63946
 ```
 
-`--set` is repeatable.
+`--set` is repeatable. Values arrive as text, so the typed keys are converted for you: booleans accept `true`/`false`/`yes`/`no`/`on`/`off`/`1`/`0`, and numbers are parsed. A value that cannot be read falls back to the shipped default rather than failing the render.
+
+```bash
+brandx render note.md --set identity.letterhead=true --set diagrams.scale=1
+```
 
 ## The cascade
 

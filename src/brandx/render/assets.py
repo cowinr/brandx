@@ -24,7 +24,6 @@ import re
 import sys
 from pathlib import Path
 
-
 # Fallback MIME types for common image extensions not covered by mimetypes on all platforms.
 _MIME_FALLBACK: dict[str, str] = {
     ".png": "image/png",

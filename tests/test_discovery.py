@@ -11,10 +11,10 @@ identity-config AE6, R4, R5.
 """
 
 import textwrap
+
 import pytest
 
-from brandx.config.discovery import load_home_config, default_config_path
-
+from brandx.config.discovery import default_config_path, load_home_config
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -70,7 +70,7 @@ class TestPrecedence:
             "brandx.config.discovery._default_config_path",
             lambda: default_file,
         )
-        config, source = load_home_config()
+        config, _source = load_home_config()
         assert config["identity"]["role"] == "Default Role"
 
 
@@ -170,6 +170,7 @@ class TestDefaultConfigPath:
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
         # Re-import so the env var is picked up
         import importlib
+
         import brandx.config.discovery as disc
         importlib.reload(disc)
         path = disc.default_config_path()

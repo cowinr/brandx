@@ -22,7 +22,6 @@ from pathlib import Path
 from brandx.config.defaults import DEFAULTS
 from brandx.config.discovery import default_config_path
 
-
 # ---------------------------------------------------------------------------
 # YAML serialisation with comments
 # ---------------------------------------------------------------------------

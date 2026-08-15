@@ -55,7 +55,6 @@ from brandx.render.assets import embed_images, file_to_data_uri
 from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
 
-
 # ---------------------------------------------------------------------------
 # Gmail clip threshold constants
 # ---------------------------------------------------------------------------

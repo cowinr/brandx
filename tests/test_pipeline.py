@@ -8,7 +8,7 @@ Covers (from plan):
 - Nested frontmatter keys parse into a nested mapping.
 """
 
-from brandx.render.pipeline import parse_text, _parse_frontmatter, _extract_title
+from brandx.render.pipeline import _extract_title, _parse_frontmatter, parse_text
 
 
 class TestParseFrontmatter:
@@ -25,18 +25,18 @@ class TestParseFrontmatter:
 
     def test_nested_frontmatter(self):
         text = "---\ncolours:\n  accent: '#red'\n---\n\nBody."
-        meta, body = _parse_frontmatter(text)
+        meta, _body = _parse_frontmatter(text)
         assert isinstance(meta["colours"], dict)
         assert meta["colours"]["accent"] == "#red"
 
     def test_malformed_yaml_returns_empty(self):
         text = "---\n: broken [ yaml\n---\nBody."
-        meta, body = _parse_frontmatter(text)
+        meta, _body = _parse_frontmatter(text)
         assert meta == {}
 
     def test_empty_frontmatter_block(self):
         text = "---\n---\nBody."
-        meta, body = _parse_frontmatter(text)
+        meta, _body = _parse_frontmatter(text)
         assert meta == {}
 
 
@@ -52,14 +52,14 @@ class TestExtractTitle:
     def test_first_h1_used_when_no_frontmatter_title(self):
         meta = {}
         body = "# First Heading\n\nContent."
-        title, out_body, from_heading = _extract_title(meta, body)
+        title, _out_body, from_heading = _extract_title(meta, body)
         assert title == "First Heading"
         assert from_heading is True
 
     def test_empty_title_when_no_source(self):
         meta = {}
         body = "No heading here."
-        title, out_body, from_heading = _extract_title(meta, body)
+        title, _out_body, from_heading = _extract_title(meta, body)
         assert title == ""
         assert from_heading is False
 

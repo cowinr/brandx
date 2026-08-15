@@ -33,7 +33,6 @@ from brandx.render.callouts import process_alerts
 from brandx.render.diagrams import extract_diagrams
 from brandx.render.tasklists import process_tasklists
 
-
 # ---------------------------------------------------------------------------
 # Markdown instance (module-level, reset between documents)
 # ---------------------------------------------------------------------------

@@ -21,16 +21,14 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-
-from brandx.config.resolver import resolve, ResolvedConfig
+from brandx.config.resolver import ResolvedConfig, resolve
 from brandx.render.document import (
+    _format_date,
+    _resolve_doc_date,
     render_document,
     render_document_file,
-    _resolve_doc_date,
-    _format_date,
 )
 from brandx.render.pipeline import parse_text
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -404,7 +402,8 @@ class TestDateFormatting:
         assert result == "8 April 2026"
 
     def test_resolve_doc_date_uses_today_when_none(self):
-        today = date.today()
+        # Must match the renderer, which deliberately uses the local calendar date.
+        today = date.today()  # noqa: DTZ011
         result = _resolve_doc_date(None, "long-british")
         today_str = f"{today.day} {['January','February','March','April','May','June','July','August','September','October','November','December'][today.month - 1]} {today.year}"
         assert result == today_str

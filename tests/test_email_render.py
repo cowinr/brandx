@@ -20,16 +20,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
-from brandx.config.resolver import resolve, ResolvedConfig
+from brandx.config.resolver import ResolvedConfig, resolve
 from brandx.render.email import (
+    _GMAIL_CLIP_WARN_BYTES,
+    _strip_codehilite,
     render_email,
     render_email_file,
-    _strip_codehilite,
-    _GMAIL_CLIP_WARN_BYTES,
 )
 from brandx.render.pipeline import parse_text
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -60,6 +60,7 @@ class TestGenerateReferenceMarkdown:
         try:
             defs.DEFAULTS["colours"]["primary"]["value"] = "#abcdef"
             import importlib
+
             import brandx.docsgen
             importlib.reload(brandx.docsgen)
             from brandx.docsgen import generate_reference_markdown as gen

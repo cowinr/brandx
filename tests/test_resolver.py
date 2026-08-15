@@ -11,14 +11,14 @@ Covers (from plan):
 """
 
 import pytest
+
+from brandx.config.defaults import nested_defaults
 from brandx.config.resolver import (
-    resolve,
     _deep_merge,
     _initials,
     _title_case_username,
+    resolve,
 )
-from brandx.config.defaults import nested_defaults
-
 
 # ---------------------------------------------------------------------------
 # Deep merge
@@ -249,3 +249,55 @@ class TestLetterheadToggle:
         """A scalar where the identity block belongs leaves the toggle at its default."""
         cfg = resolve(frontmatter={"identity": 42})
         assert cfg.letterhead is False
+
+
+# ---------------------------------------------------------------------------
+# Diagrams block coercion
+# ---------------------------------------------------------------------------
+
+class TestDiagramsCoercion:
+    """`--set` yields strings; the diagrams block is typed, so it must be coerced.
+
+    Before this, `--set diagrams.enabled=false` read as truthy and did nothing,
+    and a string scale or max_width raised TypeError inside the email renderer.
+    """
+
+    def test_defaults_keep_their_types(self):
+        diagrams = resolve().diagrams
+        assert diagrams["enabled"] is True
+        assert diagrams["scale"] == 2
+        assert diagrams["max_width"] == 912
+
+    @pytest.mark.parametrize(
+        "token,expected",
+        [("false", False), ("no", False), ("off", False), ("0", False),
+         ("true", True), ("yes", True), ("on", True), ("1", True)],
+    )
+    def test_enabled_string_is_coerced(self, token, expected):
+        assert resolve(flags={"diagrams.enabled": token}).diagrams["enabled"] is expected
+
+    def test_enabled_unparseable_falls_back_to_on(self):
+        assert resolve(flags={"diagrams.enabled": "junk"}).diagrams["enabled"] is True
+
+    @pytest.mark.parametrize("token,expected", [("1", 1), ("3", 3), ("1.5", 1.5)])
+    def test_scale_string_is_coerced(self, token, expected):
+        assert resolve(flags={"diagrams.scale": token}).diagrams["scale"] == expected
+
+    def test_scale_survives_arithmetic(self):
+        """The email renderer divides by scale; a string would raise TypeError."""
+        assert 1000 / resolve(flags={"diagrams.scale": "1"}).diagrams["scale"] == 1000
+
+    def test_max_width_survives_comparison(self):
+        """The email renderer compares against max_width; a string would raise."""
+        assert 1000 > resolve(flags={"diagrams.max_width": "600"}).diagrams["max_width"]
+
+    @pytest.mark.parametrize("token", ["x", "", "  "])
+    def test_unparseable_numbers_fall_back_to_the_default(self, token):
+        cfg = resolve(flags={"diagrams.scale": token, "diagrams.max_width": token})
+        assert cfg.diagrams["scale"] == 2
+        assert cfg.diagrams["max_width"] == 912
+
+    def test_yaml_booleans_and_numbers_pass_through(self):
+        cfg = resolve(home_config={"diagrams": {"enabled": False, "scale": 3}})
+        assert cfg.diagrams["enabled"] is False
+        assert cfg.diagrams["scale"] == 3

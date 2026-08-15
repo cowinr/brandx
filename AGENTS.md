@@ -5,6 +5,7 @@ Generic, identity-free tool that renders markdown into a branded HTML document o
 ## Commands
 
 ```bash
+uv sync                             # install runtime deps plus the dev group
 uv run pytest                       # run the test suite
 uv run pytest tests/test_email_render.py   # single test file
 uv run ruff check                   # lint
@@ -33,8 +34,9 @@ Install for use: `uv tool install git+https://github.com/cowinr/brandx`.
 - **Reproduce ea-brand technique, not code.** `~/projects/ea-brand` is the pattern source for the hard parts (Outlook primitives, base64 embedding, dependency-free highlighting); reproduce the technique, do not fork.
 - **Outlook fidelity cannot be tested in automation.** The email golden-HTML snapshot guards structural drift only; true fidelity needs a manual paste-into-Outlook check when the email surface changes.
 - **The letterhead banner is opt-in** (`identity.letterhead`, default false). Its absence from a default render is the design, not a bug. Tests that need it turn it on through `_letterhead_cfg()`.
-- **A `--set` value is always a string.** A boolean config key must be coerced through `resolver._as_bool`, or `--set key=false` reads as truthy and silently inverts the user's intent.
+- **A `--set` value is always a string.** Any typed config key must be coerced at resolution time, in `ResolvedConfig.__init__`, via `resolver._as_bool` or `resolver._as_number`. Skip it and `--set key=false` reads as truthy, while a numeric key raises `TypeError` deep inside a renderer. Coerce in the resolver, never at the read site: there are two renderers and they would drift.
 - `ResolvedConfig` is immutable. Do not mutate it after resolution.
+- **Ruff is pinned to one minor** in the `dev` dependency group. 0.16 widened the default rule set, which turned a clean repo into 47 findings with no code change. Widen the pin only alongside a pass that clears whatever the new version reports.
 
 ## Boundaries
 

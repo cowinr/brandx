@@ -12,9 +12,7 @@ Covers:
 
 import base64
 
-
 from brandx.render.assets import embed_images, file_to_data_uri
-
 
 # ---------------------------------------------------------------------------
 # file_to_data_uri

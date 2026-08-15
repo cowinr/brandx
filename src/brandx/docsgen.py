@@ -15,7 +15,6 @@ CLI (via brandx docsgen — if the subcommand is added in future):
 
 from brandx.config.defaults import DEFAULTS
 
-
 # ---------------------------------------------------------------------------
 # Markdown generation
 # ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@ Covers:
 import pytest
 
 from brandx.config.defaults import DEFAULTS, flat_defaults, nested_defaults
-from brandx.config.schema import validate_config, known_paths
+from brandx.config.schema import known_paths, validate_config
 
 
 def _all_leaf_entries(node: dict, path: str = "") -> list[tuple[str, dict]]:

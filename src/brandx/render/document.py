@@ -52,7 +52,6 @@ from brandx.render.assets import embed_images, file_to_data_uri
 from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
 
-
 # ---------------------------------------------------------------------------
 # Date formatting
 # ---------------------------------------------------------------------------
@@ -79,7 +78,7 @@ def _format_date(dt: date, fmt: str) -> str:
     if fmt == "long-british":
         # No leading zero on the day.
         return f"{dt.day} {_MONTHS[dt.month - 1]} {dt.year}"
-    if fmt in _NAMED_FORMATS and _NAMED_FORMATS[fmt]:
+    if _NAMED_FORMATS.get(fmt):
         # On Windows %-d is not supported; use strftime safely.
         try:
             return dt.strftime(_NAMED_FORMATS[fmt])
@@ -93,12 +92,17 @@ def _format_date(dt: date, fmt: str) -> str:
 
 
 def _resolve_doc_date(date_raw: str | None, date_format: str) -> str:
-    """Parse date_raw (from frontmatter) or fall back to today; format per config."""
+    """Parse date_raw (from frontmatter) or fall back to today; format per config.
+
+    A document date is a calendar date on a letterhead, not an instant, so the
+    naive-datetime and local-today rules do not apply. Forcing UTC here would
+    print yesterday's date on a document written after 00:00 west of Greenwich.
+    """
     dt: date | None = None
     if date_raw:
         for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%B %d, %Y", "%d %B %Y"):
             try:
-                dt = datetime.strptime(date_raw, fmt).date()
+                dt = datetime.strptime(date_raw, fmt).date()  # noqa: DTZ007
                 break
             except ValueError:
                 continue
@@ -109,7 +113,7 @@ def _resolve_doc_date(date_raw: str | None, date_format: str) -> str:
                 file=sys.stderr,
             )
     if dt is None:
-        dt = date.today()
+        dt = date.today()  # noqa: DTZ011 - the author's local calendar date is the right one
     return _format_date(dt, date_format)
 
 

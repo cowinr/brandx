@@ -6,7 +6,7 @@ Covers (from plan):
 - alert_type_for_key normalisation.
 """
 
-from brandx.render.callouts import process_alerts, alert_type_for_key, _split_blockquote_paragraphs
+from brandx.render.callouts import _split_blockquote_paragraphs, alert_type_for_key, process_alerts
 
 
 class TestSplitBlockquoteParagraphs:
@@ -39,7 +39,7 @@ class TestSplitBlockquoteParagraphs:
         inner = "<p>[!NOTE] A note.</p>\n<p>Plain continuation.</p>"
         chunks = _split_blockquote_paragraphs(inner)
         assert len(chunks) == 1
-        is_alert, atype, body = chunks[0]
+        is_alert, _atype, body = chunks[0]
         assert is_alert is True
         assert "Plain continuation." in body
 

@@ -9,10 +9,8 @@ Covers:
 
 from pathlib import Path
 
-
 from brandx import output as _output_mod
 from brandx.output import open_in_browser, preview, write_file
-
 
 # ---------------------------------------------------------------------------
 # write_file

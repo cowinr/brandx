@@ -144,7 +144,7 @@ def test_bad_brand_path_continues_and_resolve_survives(tmp_path, capsys):
     assert c.state.brand_path is None
     assert "not found" in capsys.readouterr().out.lower()
     # The panel re-resolve must not crash on the rejected path.
-    cfg, label = c._resolve()
+    cfg, _label = c._resolve()
     assert cfg is not None
 
 

@@ -36,7 +36,6 @@ from pathlib import Path
 
 from brandx.config.resolver import ResolvedConfig
 
-
 # ---------------------------------------------------------------------------
 # Extraction
 # ---------------------------------------------------------------------------
@@ -82,8 +81,7 @@ def extract_diagrams(markdown_text: str) -> tuple[str, list[str]]:
     for match in _MERMAID_FENCE_RE.finditer(markdown_text):
         parts.append(markdown_text[last_end : match.start()])
         body = match.group("body")
-        if body.endswith("\n"):
-            body = body[:-1]
+        body = body.removesuffix("\n")
         idx = len(sources)
         sources.append(body)
         parts.append(f'\n\n<!-- bx:mermaid id="{idx}" -->\n\n')
@@ -214,7 +212,9 @@ _SUBPROCESS_TIMEOUT_SECONDS = 60
 
 def _call_mmdc(cmd: list[str]) -> subprocess.CompletedProcess:
     """Run the mmdc subprocess. The sole call site, so tests can monkeypatch it."""
-    return subprocess.run(cmd, capture_output=True, timeout=_SUBPROCESS_TIMEOUT_SECONDS)
+    return subprocess.run(
+        cmd, capture_output=True, timeout=_SUBPROCESS_TIMEOUT_SECONDS, check=False
+    )
 
 
 def _render_batch(
