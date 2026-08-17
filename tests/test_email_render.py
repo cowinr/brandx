@@ -20,6 +20,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 from brandx.config.resolver import ResolvedConfig, resolve
 from brandx.render.email import (
     _GMAIL_CLIP_WARN_BYTES,
@@ -28,6 +30,7 @@ from brandx.render.email import (
     render_email_file,
 )
 from brandx.render.pipeline import parse_text
+from brandx.watermark import WatermarkError, extract, strip
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -787,3 +790,53 @@ class TestRenderEmailFile:
         assert "My Note" in html
         assert "<style>" not in html
         assert 'role="presentation"' in html
+
+
+# ---------------------------------------------------------------------------
+# Watermark
+# ---------------------------------------------------------------------------
+
+class TestWatermark:
+    def test_absent_by_default(self):
+        assert extract(_render("Hello.")) is None
+
+    def test_round_trips_when_given(self):
+        doc = parse_text("Hello.\n\nSecond paragraph.")
+        html = render_email(doc, _make_cfg(), watermark="T421")
+        assert extract(html) == "T421"
+
+    def test_changes_nothing_visible(self):
+        doc = parse_text("Hello.\n\nSecond paragraph.")
+        plain = render_email(doc, _make_cfg())
+        marked = render_email(doc, _make_cfg(), watermark="T421")
+        assert strip(marked) == plain
+
+    def test_survives_a_reply_trimmed_to_one_paragraph(self):
+        doc = parse_text("First.\n\nSecond.\n\nThird.")
+        html = render_email(doc, _make_cfg(), watermark="T421")
+        quoted = [line for line in html.splitlines() if "Third." in line]
+        assert quoted, "the fixture needs the last paragraph on its own line"
+        assert extract("\n".join(quoted)) == "T421"
+
+    def test_a_bad_payload_raises(self):
+        doc = parse_text("Hello.")
+        with pytest.raises(WatermarkError):
+            render_email(doc, _make_cfg(), watermark="T421 \U0001f431")
+
+    def test_the_size_warning_counts_the_watermark(self, capsys):
+        # The injection has to happen before _check_size, or the warning reports
+        # a size smaller than the one actually sent. A document big enough to
+        # trip the warning, with enough paragraphs for the watermark to add
+        # more than a kilobyte, discriminates between the two orderings.
+        md = "\n\n".join(f"Paragraph {n}. " + "filler text " * 20 for n in range(400))
+        doc = parse_text(md)
+
+        html = render_email(doc, _make_cfg(), watermark="T421")
+        warning = capsys.readouterr().err
+        assert "may clip this message" in warning
+
+        reported_kb = int(re.search(r"email HTML is (\d+) KB", warning).group(1))
+        assert reported_kb == len(html.encode("utf-8")) // 1024
+
+        plain = render_email(doc, _make_cfg())
+        assert len(html.encode("utf-8")) - len(plain.encode("utf-8")) > 1024

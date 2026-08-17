@@ -7,6 +7,7 @@ Responsibilities:
     - Extract fenced ```mermaid blocks from the raw markdown before conversion,
       replacing each with a placeholder marker so each renderer can substitute its
       own diagram image (see diagrams.py for why this runs before md.convert()).
+    - Read the optional `watermark:` frontmatter key (see _frontmatter_watermark).
     - Run python-markdown with the KTD1 extension set to produce structural HTML.
     - Reset the markdown instance between documents to avoid cross-document state.
     - Call callouts.split_alerts() so each renderer receives pre-processed alert HTML.
@@ -105,6 +106,24 @@ def _extract_title(
 
 
 # ---------------------------------------------------------------------------
+# Watermark id
+# ---------------------------------------------------------------------------
+
+def _frontmatter_watermark(meta: dict[str, Any]) -> str | None:
+    """Return the frontmatter watermark id, or None when the key is absent.
+
+    An absent key and a present-but-empty one are different states. `watermark:`
+    with no value parses as None, and treating that as absent would silently
+    drop a watermark the author asked for, so it is returned as "" for the
+    renderer to reject. A numeric id (`watermark: 94827`) is coerced to a string.
+    """
+    if "watermark" not in meta:
+        return None
+    raw = meta["watermark"]
+    return "" if raw is None else str(raw)
+
+
+# ---------------------------------------------------------------------------
 # ParsedDocument
 # ---------------------------------------------------------------------------
 
@@ -125,6 +144,9 @@ class ParsedDocument:
         diagrams: Mermaid diagram sources extracted from the raw markdown, in
                   document order, referenced by <!-- bx:mermaid id="N" --> markers
                   in body_html.
+        watermark: Watermark id from frontmatter, as a string. None means the key
+                   was absent; "" means it was present but empty, which the
+                   renderers reject rather than silently ignore.
     """
 
     title: str
@@ -136,6 +158,7 @@ class ParsedDocument:
     title_from_heading: bool
     source_dir: Path = field(default_factory=Path)
     diagrams: list[str] = field(default_factory=list)
+    watermark: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -192,4 +215,5 @@ def parse_text(text: str, source_dir: Path | None = None) -> ParsedDocument:
         title_from_heading=title_from_heading,
         source_dir=source_dir,
         diagrams=diagrams,
+        watermark=_frontmatter_watermark(meta),
     )

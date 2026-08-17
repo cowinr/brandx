@@ -21,6 +21,8 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from brandx.config.resolver import ResolvedConfig, resolve
 from brandx.render.document import (
     _format_date,
@@ -29,6 +31,7 @@ from brandx.render.document import (
     render_document_file,
 )
 from brandx.render.pipeline import parse_text
+from brandx.watermark import ZW_DELIM, WatermarkError, extract, strip
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -463,3 +466,39 @@ class TestRenderDocumentFile:
         html = render_document_file(md_file, cfg)
         assert "My Note" in html
         assert "<style>" in html
+
+
+# ---------------------------------------------------------------------------
+# Watermark
+# ---------------------------------------------------------------------------
+
+class TestWatermark:
+    def test_absent_by_default(self):
+        html = _render("Hello.")
+        assert extract(html) is None
+
+    def test_round_trips_when_given(self):
+        doc = parse_text("Hello.\n\nSecond paragraph.")
+        html = render_document(doc, _make_cfg(), watermark="T421")
+        assert extract(html) == "T421"
+
+    def test_changes_nothing_visible(self):
+        doc = parse_text("Hello.\n\nSecond paragraph.")
+        plain = render_document(doc, _make_cfg())
+        marked = render_document(doc, _make_cfg(), watermark="T421")
+        assert strip(marked) == plain
+
+    def test_repeats_at_every_paragraph(self):
+        doc = parse_text("One.\n\nTwo.\n\nThree.")
+        html = render_document(doc, _make_cfg(), watermark="T421")
+        assert html.count(ZW_DELIM) == html.count("</p>") * 2
+
+    def test_a_bad_payload_raises(self):
+        doc = parse_text("Hello.")
+        with pytest.raises(WatermarkError):
+            render_document(doc, _make_cfg(), watermark="café")
+
+    def test_an_empty_payload_raises_rather_than_silently_skipping(self):
+        doc = parse_text("Hello.")
+        with pytest.raises(WatermarkError):
+            render_document(doc, _make_cfg(), watermark="")

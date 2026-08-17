@@ -17,6 +17,8 @@ Responsibilities:
     - Substitute bx:mermaid markers with a sized, Outlook-safe base64 PNG <img>
       in a single-cell table, or the escaped diagram source as a fallback code
       block when rendering was unavailable.
+    - Inject an optional zero-width watermark, before the size check so the
+      reported size is the size that is sent (see brandx.watermark).
     - Warn to stderr when total email size nears the Gmail clip threshold (80 KB).
     - Warn to stderr when the embedded avatar image is heavy (> 100 KB encoded).
 
@@ -54,6 +56,7 @@ from brandx.config.resolver import ResolvedConfig
 from brandx.render.assets import embed_images, file_to_data_uri
 from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
+from brandx.watermark import inject as inject_watermark
 
 # ---------------------------------------------------------------------------
 # Gmail clip threshold constants
@@ -728,16 +731,22 @@ def _check_size(html: str) -> None:
 # Public API
 # ---------------------------------------------------------------------------
 
-def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
+def render_email(
+    doc: ParsedDocument, cfg: ResolvedConfig, watermark: str | None = None
+) -> str:
     """Render Outlook-safe email HTML from a ParsedDocument and ResolvedConfig.
 
     Args:
         doc: ParsedDocument from the shared structural pass.
         cfg: Immutable resolved brand configuration.
+        watermark: Optional id to hide in the output as zero-width characters.
 
     Returns:
         A complete email HTML string (100% inline styles, table-based layout,
         no <style> block).
+
+    Raises:
+        WatermarkError: when a watermark is given that cannot be encoded.
     """
     colours = dict(cfg.colours)
     text = colours.get("text", "#1f2933")
@@ -784,6 +793,12 @@ def render_email(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
 </body>
 </html>"""
+
+    # Inject before the size check, so the reported size is the size that is sent.
+    # `is not None` rather than truthiness: --watermark '' is a mistake the
+    # user should be told about, not a silent no-op.
+    if watermark is not None:
+        html = inject_watermark(html, watermark)
 
     _check_size(html)
     return html

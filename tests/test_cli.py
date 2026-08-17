@@ -1,7 +1,7 @@
 """Tests for the brandx CLI entry point.
 
 Covers (U1 originals kept intact):
-    - --help lists both subcommands.
+    - --help lists every subcommand.
     - Entry point imports without error.
     - --version.
     - No subcommand exits zero.
@@ -22,6 +22,8 @@ Covers (U9 — render command):
 
 from __future__ import annotations
 
+import io
+import re
 import subprocess
 import sys
 import textwrap
@@ -62,6 +64,7 @@ def test_help_lists_subcommands():
     assert result.returncode == 0
     assert "init" in result.stdout
     assert "render" in result.stdout
+    assert "watermark" in result.stdout
 
 
 def test_import_without_error():
@@ -77,7 +80,7 @@ def test_version():
         check=False,
     )
     assert result.returncode == 0
-    assert "1.2.1" in result.stdout
+    assert "1.3.0" in result.stdout
 
 
 def test_no_subcommand_launches_session_and_exits_zero():
@@ -439,3 +442,216 @@ def test_render_email_letterhead_flag(tmp_path, capsys):
         main(["render", str(md), "--email", "--letterhead"])
     assert exc.value.code == 0
     assert "border-bottom:2px solid" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Watermark: --watermark on render, and the watermark read subcommand
+# ---------------------------------------------------------------------------
+
+def test_render_watermark_round_trips_through_the_read_subcommand(tmp_path, capsys):
+    """render --watermark writes a hidden id; watermark reads it back."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    out = tmp_path / "doc.html"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "-o", str(out), "--watermark", "T421"])
+    assert exc.value.code == 0
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(out)])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == "T421"
+
+
+def test_render_email_watermark_round_trips(tmp_path, capsys):
+    """The email surface carries the watermark too."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    out = tmp_path / "email.html"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", "--email", str(md), "-o", str(out), "--watermark", "T421"])
+    assert exc.value.code == 0
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(out)])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == "T421"
+
+
+def test_render_without_watermark_leaves_nothing_to_find(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    out = tmp_path / "doc.html"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "-o", str(out)])
+    assert exc.value.code == 0
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(out)])
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "No watermark found" in captured.err
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected_message"),
+    [
+        ("", "must not be empty"),
+        ("café", "printable ASCII"),
+        ("x" * 65, "the limit is"),
+    ],
+)
+def test_render_rejects_an_unencodable_watermark(tmp_path, capsys, payload, expected_message):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--watermark", payload])
+    assert exc.value.code == 1
+    assert expected_message in capsys.readouterr().err
+
+
+def test_watermark_missing_file_exits_one(tmp_path, capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(tmp_path / "nope.html")])
+    assert exc.value.code == 1
+    assert "not found" in capsys.readouterr().err
+
+
+def test_watermark_reads_stdin_when_no_file_is_given(monkeypatch, capsys):
+    from brandx.watermark import encode
+
+    class _Stdin:
+        buffer = io.BytesIO(f"<p>Hi{encode('T421')}</p>".encode())
+
+    monkeypatch.setattr(sys, "stdin", _Stdin())
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == "T421"
+
+
+def test_watermark_all_lists_every_distinct_payload(tmp_path, capsys):
+    from brandx.watermark import encode
+
+    thread = tmp_path / "thread.html"
+    thread.write_text(
+        f"<p>reply{encode('T999')}</p><p>quoted{encode('T421')}</p>",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(thread), "--all"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.split() == ["T999", "T421"]
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(thread)])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.split() == ["T999"]
+
+
+def test_watermark_survives_a_plain_text_paste(tmp_path, capsys):
+    """A reply pasted as plain text keeps the invisible characters."""
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+    out = tmp_path / "email.html"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", "--email", str(md), "-o", str(out), "--watermark", "T421"])
+    assert exc.value.code == 0
+    capsys.readouterr()
+
+    plain = re.sub(r"<[^>]+>", "", out.read_text(encoding="utf-8"))
+    pasted = tmp_path / "reply.txt"
+    pasted.write_text(plain, encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(pasted)])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == "T421"
+
+
+# ---------------------------------------------------------------------------
+# Watermark precedence: frontmatter, --watermark, --no-watermark
+# ---------------------------------------------------------------------------
+
+WATERMARKED_MD = textwrap.dedent("""\
+    ---
+    title: Test Doc
+    watermark: T421
+    ---
+
+    # Test Doc
+
+    Hello world.
+""")
+
+
+def _render_and_read(tmp_path, capsys, md_text, *extra_args):
+    """Render md_text with extra_args, then return the watermark read back."""
+    md = tmp_path / "doc.md"
+    md.write_text(md_text, encoding="utf-8")
+    out = tmp_path / "doc.html"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "-o", str(out), *extra_args])
+    assert exc.value.code == 0
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exc:
+        main(["watermark", str(out)])
+    code = exc.value.code
+    return code, capsys.readouterr().out.strip()
+
+
+def test_frontmatter_watermark_is_applied(tmp_path, capsys):
+    assert _render_and_read(tmp_path, capsys, WATERMARKED_MD) == (0, "T421")
+
+
+def test_frontmatter_watermark_applies_to_the_email_surface(tmp_path, capsys):
+    assert _render_and_read(tmp_path, capsys, WATERMARKED_MD, "--email") == (0, "T421")
+
+
+def test_the_flag_beats_the_frontmatter(tmp_path, capsys):
+    result = _render_and_read(tmp_path, capsys, WATERMARKED_MD, "--watermark", "T999")
+    assert result == (0, "T999")
+
+
+def test_no_watermark_suppresses_the_frontmatter(tmp_path, capsys):
+    code, out = _render_and_read(tmp_path, capsys, WATERMARKED_MD, "--no-watermark")
+    assert code == 2
+    assert out == ""
+
+
+def test_no_watermark_is_harmless_without_a_frontmatter_key(tmp_path, capsys):
+    code, _ = _render_and_read(tmp_path, capsys, SAMPLE_MD, "--no-watermark")
+    assert code == 2
+
+
+def test_watermark_and_no_watermark_together_are_refused(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text(SAMPLE_MD, encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md), "--watermark", "T421", "--no-watermark"])
+    assert exc.value.code == 2
+    assert "not allowed with argument" in capsys.readouterr().err
+
+
+def test_an_empty_frontmatter_watermark_is_an_error_not_a_skip(tmp_path, capsys):
+    md = tmp_path / "doc.md"
+    md.write_text("---\ntitle: T\nwatermark:\n---\n\nBody.\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc:
+        main(["render", str(md)])
+    assert exc.value.code == 1
+    assert "must not be empty" in capsys.readouterr().err

@@ -139,3 +139,34 @@ class TestParseText:
         doc1 = parse_text(text)
         doc2 = parse_text(text)
         assert doc1.body_html == doc2.body_html
+
+
+# ---------------------------------------------------------------------------
+# Watermark frontmatter key
+# ---------------------------------------------------------------------------
+
+class TestWatermarkFrontmatter:
+    def test_absent_key_is_none(self):
+        doc = parse_text("---\ntitle: T\n---\n\nBody.")
+        assert doc.watermark is None
+
+    def test_no_frontmatter_at_all_is_none(self):
+        assert parse_text("Body.").watermark is None
+
+    def test_string_id_is_read(self):
+        doc = parse_text("---\nwatermark: T421\n---\n\nBody.")
+        assert doc.watermark == "T421"
+
+    def test_numeric_id_is_coerced_to_a_string(self):
+        doc = parse_text("---\nwatermark: 94827\n---\n\nBody.")
+        assert doc.watermark == "94827"
+
+    def test_present_but_empty_key_is_distinguished_from_absent(self):
+        # `watermark:` with no value must not read as "no watermark wanted";
+        # the renderer rejects "" with a message instead.
+        doc = parse_text("---\nwatermark:\n---\n\nBody.")
+        assert doc.watermark == ""
+
+    def test_quoted_id_containing_a_colon_survives(self):
+        doc = parse_text('---\nwatermark: "TRACK-ID:94827"\n---\n\nBody.')
+        assert doc.watermark == "TRACK-ID:94827"

@@ -15,6 +15,7 @@ Responsibilities:
       escaped diagram source as a fallback when rendering was unavailable.
     - Load the web font via a <link> in <head> when font_url is non-empty (KTD7).
     - Include an @media print stylesheet.
+    - Inject an optional zero-width watermark (see brandx.watermark).
     - Render the footer (name + date).
     - Embed the identity mark: monogram box (default) or base64 avatar img.
 
@@ -51,6 +52,7 @@ from brandx.config.resolver import ResolvedConfig
 from brandx.render.assets import embed_images, file_to_data_uri
 from brandx.render.diagrams import render_diagrams, substitute
 from brandx.render.pipeline import ParsedDocument, parse_document
+from brandx.watermark import inject as inject_watermark
 
 # ---------------------------------------------------------------------------
 # Date formatting
@@ -631,15 +633,21 @@ def _build_stylesheet(colours: Any, fonts: Any) -> str:
 # Public API
 # ---------------------------------------------------------------------------
 
-def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
+def render_document(
+    doc: ParsedDocument, cfg: ResolvedConfig, watermark: str | None = None
+) -> str:
     """Render a complete branded HTML document string.
 
     Args:
         doc: ParsedDocument from the shared structural pass.
         cfg: Immutable resolved brand configuration.
+        watermark: Optional id to hide in the output as zero-width characters.
 
     Returns:
         A complete HTML document as a string.
+
+    Raises:
+        WatermarkError: when a watermark is given that cannot be encoded.
     """
     date_str = _resolve_doc_date(doc.date_raw, cfg.date_format)
 
@@ -674,7 +682,7 @@ def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
     page_title = doc.title or cfg.name or "Document"
 
-    return f"""\
+    html = f"""\
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -705,6 +713,13 @@ def render_document(doc: ParsedDocument, cfg: ResolvedConfig) -> str:
 
 </body>
 </html>"""
+
+    # `is not None` rather than truthiness: --watermark '' is a mistake the
+    # user should be told about, not a silent no-op.
+    if watermark is not None:
+        html = inject_watermark(html, watermark)
+
+    return html
 
 
 def render_document_file(source: Path, cfg: ResolvedConfig) -> str:

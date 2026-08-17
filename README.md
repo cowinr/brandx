@@ -22,6 +22,10 @@ brandx render note.md --set colours.accent=#e63946
 
 # Use the hansard branding
 brandx render note.md --brand ~/.config/brandx/hansard.yaml --preview
+
+# Hide a task id in the output, then read it back out of a reply
+brandx render --email note.md --watermark T421 -o email.html
+brandx watermark reply.html
 ```
 
 ## Install
@@ -225,6 +229,55 @@ identity:
 ```
 
 The document footer (your name and the date) is a separate block and is not affected by this toggle.
+
+## Hidden watermark
+
+`--watermark ID` hides a short id in the output as invisible Unicode characters. Nothing about the rendered page changes: the id is carried by zero-width code points that no reader sees, and the visible text is byte-identical to a render without the flag.
+
+```bash
+brandx render --email note.md --watermark T421 -o email.html
+```
+
+A document can carry its own id in frontmatter, so a note that belongs to a task stays tagged without remembering the flag:
+
+```markdown
+---
+title: Weekly update
+watermark: T421
+---
+```
+
+Precedence runs highest first: `--no-watermark`, then `--watermark ID`, then the frontmatter key. So `--no-watermark` drops a frontmatter id for one render, and `--watermark T999` replaces it. The two flags cannot be combined. An id given as a number is fine (`watermark: 94827`); one containing a colon needs quoting, as YAML requires.
+
+Read it back out of a reply, a saved page, or a plain-text paste:
+
+```bash
+brandx watermark reply.html          # prints: T421
+brandx watermark --all thread.html   # every distinct id in a quoted thread
+pbpaste | brandx watermark           # or read stdin
+```
+
+Exit codes are `0` when an id was found, `1` when the input could not be read, and `2` when nothing valid was found, so the command scripts cleanly.
+
+The id is repeated before every closing paragraph tag, so a reply trimmed down to a single quoted paragraph still carries a whole copy. A body with no paragraphs falls back to list items, and one with neither gets a single copy appended. Each copy is protected by a checksum, so a truncated or mangled copy is discarded rather than decoded into a wrong answer.
+
+What it survives, all covered by tests:
+
+- HTML to plain text, in either direction.
+- A reply trimmed to one quoted paragraph.
+- Markup a mail client inserts into the middle of the run.
+- The characters written back as numeric character references (`&#8203;`).
+
+What it does not survive:
+
+- A client that strips zero-width characters outright. Nothing recovers from that.
+- Retyping rather than quoting. The id lives in the text, so it goes when the text goes.
+
+The payload must be printable ASCII, 64 characters or fewer. Every copy costs 24 bytes per character plus a fixed 126 bytes for the checksum and frame, so a four-character id is 222 bytes per paragraph: about 2 KB in a ten-paragraph email. That matters only against Gmail's 80 KB clip threshold, and the email size warning counts the watermark.
+
+The interactive session honours a frontmatter id, because the document declares it. The session has no flag of its own for one.
+
+Two cautions. This is a marker, not a security control: anyone who knows the scheme can read, forge, or strip the id, and the checksum guards against damage rather than tampering. And a recipient who is not expecting it has no way to see that it is there, so treat it as tracking and tell people you are using it.
 
 ## Selecting the identity mark
 
